@@ -26,7 +26,8 @@ type alias Network =
   {
     source : String, 
     sink : String,
-    adj : Dict String (Dict String (Capacity, Flow))
+    adj : Dict String (Dict String (Capacity, Flow)),
+    augmenting_path : List String
   }
 
 type alias Capacity = Int
@@ -48,7 +49,8 @@ example =
       |> Dict.insert "v2" (Dict.fromList [("v4", (6,0))])
       |> Dict.insert "v5" (Dict.fromList [("v2", (3,0)), ("v6", (2,0))])
       |> Dict.insert "v4" (Dict.fromList [("v6", (6,0))])
-      |> Dict.insert "v6" Dict.empty
+      |> Dict.insert "v6" Dict.empty,
+    augmenting_path = []
   }
 
 type alias Model = 
