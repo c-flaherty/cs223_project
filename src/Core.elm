@@ -1,6 +1,5 @@
 module Core exposing (..)
-import Set exposing (Set(..))
-
+{-
 -- section 2.2
 type Graph a 
   = Empty 
@@ -97,3 +96,8 @@ tests =
 -- a function that can check if one graph is a subgraph of another 
 -- a function that can take a graph and spit out a list of the values
 -- a function that can compare equality of graphs
+
+
+-}
+
+val = 1
