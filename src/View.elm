@@ -1,4 +1,4 @@
-module View exposing (main)
+module View exposing (..)
 
 -- Add/modify imports if you'd like. ---------------------------------
 
@@ -25,6 +25,15 @@ import Bootstrap.ButtonGroup as ButtonGroup
 import Maybe
 import Collage.Events
 import String exposing (fromInt)
+import Collage.Events
+import Json.Decode as Decode
+
+import ViewHelpers exposing(..)
+import Browser.Events
+import Maybe
+
+import Queue
+import Collage.Events
 
 type alias Network =
   {
@@ -33,9 +42,6 @@ type alias Network =
     adj : Dict String (Dict String (Capacity, Flow)),
     augmenting_path : List String
   }
-
-type alias Capacity = Int
-type alias Flow = Int 
 
 type Dir = Forward | Backward | Both
 type alias Point = { name:String, x:Float, y:Float }
@@ -74,10 +80,12 @@ type alias Model =
       points : List Point,
       edges : List Edge
     }), 
-    graphDraft : Maybe({
+    graphDraft : Maybe ({
       currentNum : Int,
       points : List (Dict String (Dict String (Capacity, Flow)))
-    })
+    }),
+    focusedVertex : Maybe String,
+    shiftDown : Bool
   }
 
 networkToModel : Model -> Network -> Model 
@@ -126,7 +134,7 @@ networkToModel model g =
             removeMaybe tmp
         )
   in
-    {model | graph = Just {points = Dict.values verts, edges = edges}, page = Algo, graphDraft = Nothing}
+    {model | graph = Just {points = Dict.values verts, edges = edges}, page = Algo, graphDraft = Nothing, focusedVertex = Nothing}
 
 graphDraftToGraph : Model -> { points : List Point, edges : List Edge }
 graphDraftToGraph model = 
@@ -135,12 +143,58 @@ graphDraftToGraph model =
     Just draft ->
       let
         {-
-        graphDraft : Maybe({
-          points : List (Dict String (Dict (Capacity, Flow)))
-        })
+        sortColumns acc cols = 
+           case (cols, acc) of 
+            ([], _ -> List.reverse acc 
+            (col::colss, []) -> 
+              let
+                comparer v1 v2 = 
+                  if (Maybe.andThen (\d -> Just (Dict.member v2 d)) (Dict.get v1 col) == Just True) then 
+                    LT
+                  else if (Maybe.andThen (\d -> Just (Dict.member v1 d)) (Dict.get v2 col) == Just True) then 
+                    GT
+                  else 
+                    LT
+              in
+                sortColumns [List.sortWith comparer col] colss 
+            (col::colss, prev::accTail) -> 
+              let 
+                comparer v1 v2 = 
+                  if (Maybe.andThen (\d -> Just (Dict.member v2 d)) (Dict.get v1 col) == Just True) then 
+                    LT
+                  else if (Maybe.andThen (\d -> Just (Dict.member v1 d)) (Dict.get v2 col) == Just True) then 
+                    GT
+                  else if List.filter (\v -> v==v1 || v==v2) prev  == [v2, v1] then 
+                    GT 
+                  else 
+                    LT        
+              in
+                sortColumns ((List.sortWith comparer col)::acc)
+              
+
+        sortedCols = sortColumns [] (List.reverse draft.points)
         -}
-        
-        columns = List.map Dict.keys draft.points
+        -- Kahn's algorithm, https://en.wikipedia.org/wiki/Topological_sorting
+        topologicalSortCol : Dict String (Dict String (Capacity, Flow)) -> List String
+        topologicalSortCol col = 
+          let
+              startNodes = Set.diff (Set.fromList (Dict.keys col)) (Set.fromList (List.concatMap Dict.keys (Dict.values col)))  
+
+              sorter : List String -> Set String -> List String
+              sorter acc start = 
+                case Set.toList start of 
+                  [] -> List.reverse acc 
+                  x::xs -> 
+                    let 
+                      tailStart = Set.remove x start
+                      nextVerts = Set.intersect (Set.fromList (Dict.keys col)) (Maybe.withDefault Set.empty <| Maybe.andThen (\d -> Just <| Set.fromList <| Dict.keys d) <| Dict.get x col)
+                    in
+                      sorter (x::acc) (Set.union tailStart nextVerts)
+          in
+            sorter [] startNodes
+          
+        columns = List.map topologicalSortCol draft.points
+
         num_columns = List.length columns 
 
         genColPos : Float -> List String -> List Point
@@ -173,6 +227,39 @@ graphDraftToGraph model =
       in
         {points = Dict.values verts, edges = edges}
 
+changeColumn : String -> String -> Model -> Model
+changeColumn point1 point2 model = 
+  case model.graphDraft of 
+    Nothing -> model 
+    Just {currentNum, points} -> 
+      if abs(getIndex point1 points - getIndex point2 points) /= 1 then 
+        {model | graphDraft = Just {currentNum = currentNum, points = points}, focusedVertex = Nothing}
+      else
+        let
+            (p1_data, tail_points) = removePoint point1 [] points 
+            point2Idx = getIndex point2 tail_points
+            new_points = insertPointWithData (Debug.log "point2idx:" point2Idx) False (Debug.log "point1:" point1) (Debug.log "P1Data:" p1_data) [] (Debug.log "tail_points:" tail_points)
+        in
+          {model | graphDraft = Just {currentNum = currentNum, points = (Debug.log "NewPoints:" new_points)}, focusedVertex = Nothing}
+
+addEdgeToModel : String -> String -> Model -> Model
+addEdgeToModel point1 point model = 
+  case model.graphDraft of
+    Nothing -> model 
+    Just {currentNum, points} -> 
+      if abs(getIndex point1 points - getIndex point points) > 1 then 
+        {model | graphDraft = Just {currentNum = currentNum, points = points}, focusedVertex = Nothing}
+      else 
+        let
+            new_points = addEdge point1 point points
+        in
+          {model | graphDraft = Just {currentNum = currentNum, points = new_points}, focusedVertex = Nothing}
+
+incrementCapacityOfModel point1 point2 model = 
+  case model.graphDraft of 
+    Nothing -> model 
+    Just {currentNum, points} -> 
+      {model | graphDraft = Just {currentNum = currentNum, points = incrementCapacity point1 point2 points}, focusedVertex = Nothing}
 
 insertBetween : String -> String -> Model -> Model 
 insertBetween point1 point2 model = 
@@ -180,88 +267,47 @@ insertBetween point1 point2 model =
     Nothing       -> model 
     Just {currentNum, points} ->
       let
-            -- points : List (Dict String (Dict (Capacity, Flow)))
-          getIndex p ls = 
-            case ls of 
-              [] -> Debug.todo "Bad input in insertBetween"
-              c::cols -> 
-                if List.member p (Dict.keys c) then 
-                  0 
-                else 
-                  1 + (getIndex p cols)
-          
           idxOfPoint1 = getIndex point1 points 
           idxOfPoint2 = getIndex point2 points
 
-          addEdge : String -> String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
-          addEdge p1 p2 ls = 
-            case ls of 
-              [] -> [] 
-              c::cols -> 
-                if List.member p1 (Dict.keys c) then 
-                  (Dict.update p1 (Maybe.andThen (\d -> Just <| Dict.insert p2 (0,0) d)) c)::cols
-                else 
-                  c::(addEdge p1 p2 cols)
-
-          removeEdge : String -> String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
-          removeEdge p1 p2 ls = 
-            case ls of 
-              [] -> [] 
-              c::cols -> 
-                if List.member p1 (Dict.keys c) then 
-                  (Dict.update p1 (Maybe.andThen (\d -> Just <| Dict.remove p2 d)) c)::cols
-                else 
-                  c::(addEdge p1 p2 cols)
-
-          
-          insertPoint : Int -> Bool -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
-          insertPoint idx new_col ls = 
-            case (idx, ls, new_col) of 
-              (0, [], _) -> Debug.todo "Poorly formed input in insertBetween"
-              (_, [], _) -> Debug.todo "Poorly formed input in insertBetween"
-              (0, c::cols, False) ->
-                (Dict.insert (fromInt currentNum) Dict.empty c)::cols
-              (0, c::cols, True) ->
-                c::(Dict.singleton (fromInt currentNum) Dict.empty)::cols
-              (_, c::cols, _) ->
-                c::(insertPoint (idx-1) new_col cols)
-
           new_points = 
             if idxOfPoint1 == idxOfPoint2 then 
-              insertPoint idxOfPoint1 False points 
+              insertPoint idxOfPoint1 False (fromInt currentNum) points 
               |> addEdge point1 (fromInt currentNum)
               |> addEdge (fromInt currentNum) point2
               |> removeEdge point1 point2
             else if idxOfPoint1 == idxOfPoint2 - 1 then 
-              insertPoint idxOfPoint1 True points 
+              insertPoint idxOfPoint1 True (fromInt currentNum) points 
               |> addEdge point1 (fromInt currentNum)
               |> addEdge (fromInt currentNum) point2
               |> removeEdge point1 point2
             else if idxOfPoint1 == idxOfPoint2 + 1 then 
-              insertPoint idxOfPoint2 True points 
+              insertPoint idxOfPoint2 True (fromInt currentNum) points 
               |> addEdge point1 (fromInt currentNum)
               |> addEdge (fromInt currentNum) point2
               |> removeEdge point1 point2
             else if idxOfPoint1 < idxOfPoint2 - 1 then 
-              insertPoint (idxOfPoint1+1) False points 
+              insertPoint (idxOfPoint1+1) False (fromInt currentNum) points 
               |> addEdge point1 (fromInt currentNum)
               |> addEdge (fromInt currentNum) point2
               |> removeEdge point1 point2
             else  
-              insertPoint (idxOfPoint2+1) False points
+              insertPoint (idxOfPoint2+1) False (fromInt currentNum) points
               |> addEdge point1 (fromInt currentNum)
               |> addEdge (fromInt currentNum) point2
               |> removeEdge point1 point2
 
       in
-       {model | graphDraft = Just {currentNum = currentNum + 1, points = new_points}}
+      {model | graphDraft = Just {currentNum = currentNum + 1, points = (Debug.log "NewPointsInsertBtwn:" new_points)}, focusedVertex = Nothing}
 
 
 initModel : Model 
 initModel = {
     page = Home,
     graph = Nothing,
-    graphDraft = Nothing
+    graphDraft = Nothing,
+    focusedVertex = Nothing,
+    shiftDown = False
   }
 
 main : Program Flags Model Msg
@@ -281,7 +327,13 @@ init () =
 type Msg = ToHome
   | ToExample1
   | BuildGraph
-  | ClickedOn {point1 : String, point2 : String}
+  | ClickedOnEdge {point1 : String, point2 : String}
+  | MouseDownOnVertex String 
+  | MouseUpOnVertex String
+  | MouseUp
+  | ShiftDown 
+  | ShiftUp
+  | Other
 
 type Page = Home 
   | Algo 
@@ -289,19 +341,64 @@ type Page = Home
 
 subscriptions : Model -> Sub Msg 
 subscriptions model = 
-  Sub.none
+  Sub.batch 
+    [
+      Browser.Events.onMouseUp
+        (Decode.succeed MouseUp),
+      Browser.Events.onKeyDown
+        (Decode.map
+          (\key -> if key == "Shift" then ShiftDown else Other)
+          (Decode.field "key" Decode.string)
+        ),
+      Browser.Events.onKeyUp
+        (Decode.map
+          (\key -> if key == "Shift" then ShiftUp else Other)
+          (Decode.field "key" Decode.string)
+        )
+    ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
   case msg of  
     ToExample1 -> (networkToModel model example1, Cmd.none)
-    BuildGraph -> ({model | graph = Nothing, graphDraft = initGraphDraft, page = GraphConstructor}, Cmd.none)
-    ToHome -> ({model | graph = Nothing, graphDraft = Nothing, page = Home}, Cmd.none)
-    ClickedOn {point1, point2} -> 
+    BuildGraph -> ({model | graph = Nothing, graphDraft = initGraphDraft, page = GraphConstructor, focusedVertex = Nothing}, Cmd.none)
+    ToHome -> ({model | graph = Nothing, graphDraft = Nothing, page = Home, focusedVertex = Nothing}, Cmd.none)
+    ClickedOnEdge {point1, point2} -> 
       case model.graphDraft of 
         Nothing -> (model, Cmd.none)
         Just draft -> 
-          (insertBetween point1 point2 model, Cmd.none)
+          if model.shiftDown then 
+            (incrementCapacityOfModel point1 point2 model, Cmd.none) 
+          else
+            (insertBetween point1 point2 model, Cmd.none)
+    MouseDownOnVertex point ->
+      if point == "t" then 
+        (model, Cmd.none)
+      else 
+        ({model | focusedVertex = Just point}, Cmd.none)
+    MouseUpOnVertex point ->
+      case model.focusedVertex of 
+        Nothing -> (model, Cmd.none)
+        Just point1 -> 
+          if model.shiftDown then 
+            if point == point1 || point == "s" then 
+              (model, Cmd.none)
+            else 
+              (addEdgeToModel point1 point model, Cmd.none)
+          else
+            if point1 == "s" || point1 == "t"  || point == "s" || point == "t" || point == point1 then 
+              (model, Cmd.none)
+            else 
+              (changeColumn point1 point model, Cmd.none)
+    MouseUp ->
+      ({model | focusedVertex = Nothing}, Cmd.none)
+    ShiftDown -> 
+      ({model | shiftDown = True}, Cmd.none)
+    ShiftUp -> 
+      ({model | shiftDown = False}, Cmd.none)
+    Other -> 
+      (model, Cmd.none)
+
 
 algo_view : Model -> Html Msg 
 algo_view model = 
@@ -398,17 +495,23 @@ graph_constructor_view model =
   let
     graph = graphDraftToGraph model 
 
-    createCirc : Point -> Collage.Collage msg
+    createCirc : Point -> Collage.Collage Msg
     createCirc p = 
       Collage.Layout.impose
         (Collage.group
           [Collage.circle 25 
-            |> Collage.outlined (Collage.solid Collage.thick (uniform Color.blue))
+            |> 
+              (
+                if Just p.name == model.focusedVertex then Collage.outlined (Collage.solid Collage.thick (uniform Color.red))
+                else Collage.outlined (Collage.solid Collage.thick (uniform Color.blue))
+              )
             |> Collage.shift (p.x, p.y),
           Collage.Text.fromString p.name |> Collage.rendered |> Collage.shift (p.x, p.y)])
         (Collage.circle 25
           |> filled (uniform Color.white)
           |> Collage.shift (p.x, p.y))
+          |> Collage.Events.onMouseDown (\_ -> MouseDownOnVertex p.name)
+          |> Collage.Events.onMouseUp (\_ -> MouseUpOnVertex p.name)
 
 
 
@@ -438,13 +541,9 @@ graph_constructor_view model =
           Collage.Text.fromString (String.fromInt e.capacity) 
             |> Collage.Text.color (Color.green)
             |> Collage.rendered 
-            |> Collage.shift (rotate -90 50),
-          Collage.Text.fromString (String.fromInt e.flow) 
-            |> Collage.Text.color (Color.red)
-            |> Collage.rendered 
-            |> Collage.shift (rotate 90 50)
+            |> Collage.shift (rotate -90 50)
           ]
-        |> Collage.Events.onClick (ClickedOn {point1 = e.point1.name, point2 = e.point2.name})
+        |> Collage.Events.onClick (ClickedOnEdge {point1 = e.point1.name, point2 = e.point2.name}) 
 
     points = List.map createCirc graph.points
     edges = List.map createEdge graph.edges

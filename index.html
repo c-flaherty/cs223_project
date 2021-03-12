@@ -5159,20 +5159,47 @@ var $elm$core$Task$perform = F2(
 	});
 var $elm$browser$Browser$element = _Browser_element;
 var $author$project$View$Home = {$: 'Home'};
-var $author$project$View$initModel = {graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$View$Home};
+var $author$project$View$initModel = {focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$View$Home, shiftDown: false};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$View$init = function (_v0) {
 	return _Utils_Tuple2($author$project$View$initModel, $elm$core$Platform$Cmd$none);
 };
+var $author$project$View$MouseUp = {$: 'MouseUp'};
+var $author$project$View$Other = {$: 'Other'};
+var $author$project$View$ShiftDown = {$: 'ShiftDown'};
+var $author$project$View$ShiftUp = {$: 'ShiftUp'};
 var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$View$subscriptions = function (model) {
-	return $elm$core$Platform$Sub$none;
-};
-var $author$project$View$GraphConstructor = {$: 'GraphConstructor'};
+var $elm$json$Json$Decode$field = _Json_decodeField;
+var $elm$browser$Browser$Events$Document = {$: 'Document'};
+var $elm$browser$Browser$Events$MySub = F3(
+	function (a, b, c) {
+		return {$: 'MySub', a: a, b: b, c: c};
+	});
+var $elm$browser$Browser$Events$State = F2(
+	function (subs, pids) {
+		return {pids: pids, subs: subs};
+	});
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var $elm$core$Dict$empty = $elm$core$Dict$RBEmpty_elm_builtin;
+var $elm$browser$Browser$Events$init = $elm$core$Task$succeed(
+	A2($elm$browser$Browser$Events$State, _List_Nil, $elm$core$Dict$empty));
+var $elm$browser$Browser$Events$nodeToKey = function (node) {
+	if (node.$ === 'Document') {
+		return 'd_';
+	} else {
+		return 'w_';
+	}
+};
+var $elm$browser$Browser$Events$addKey = function (sub) {
+	var node = sub.a;
+	var name = sub.b;
+	return _Utils_Tuple2(
+		_Utils_ap(
+			$elm$browser$Browser$Events$nodeToKey(node),
+			name),
+		sub);
+};
 var $elm$core$Dict$Black = {$: 'Black'};
 var $elm$core$Dict$RBNode_elm_builtin = F5(
 	function (a, b, c, d, e) {
@@ -5294,97 +5321,289 @@ var $elm$core$Dict$fromList = function (assocs) {
 		$elm$core$Dict$empty,
 		assocs);
 };
-var $author$project$View$example1 = {
-	adj: A3(
-		$elm$core$Dict$insert,
-		'v6',
-		$elm$core$Dict$empty,
-		A3(
-			$elm$core$Dict$insert,
-			'v4',
-			$elm$core$Dict$fromList(
-				_List_fromArray(
-					[
-						_Utils_Tuple2(
-						'v6',
-						_Utils_Tuple2(6, 0))
-					])),
-			A3(
-				$elm$core$Dict$insert,
-				'v5',
-				$elm$core$Dict$fromList(
-					_List_fromArray(
-						[
-							_Utils_Tuple2(
-							'v2',
-							_Utils_Tuple2(3, 0)),
-							_Utils_Tuple2(
-							'v6',
-							_Utils_Tuple2(2, 0))
-						])),
-				A3(
-					$elm$core$Dict$insert,
-					'v2',
-					$elm$core$Dict$fromList(
-						_List_fromArray(
-							[
-								_Utils_Tuple2(
-								'v4',
-								_Utils_Tuple2(6, 0))
-							])),
-					A3(
-						$elm$core$Dict$insert,
-						'v3',
-						$elm$core$Dict$fromList(
-							_List_fromArray(
-								[
-									_Utils_Tuple2(
-									'v5',
-									_Utils_Tuple2(4, 0))
-								])),
-						A3(
-							$elm$core$Dict$insert,
-							'v1',
-							$elm$core$Dict$fromList(
-								_List_fromArray(
-									[
-										_Utils_Tuple2(
-										'v3',
-										_Utils_Tuple2(4, 0)),
-										_Utils_Tuple2(
-										'v2',
-										_Utils_Tuple2(3, 0))
-									])),
-							$elm$core$Dict$empty)))))),
-	augmenting_path: _List_Nil,
-	sink: 'v6',
-	source: 'v1'
-};
-var $author$project$View$initGraphDraft = $elm$core$Maybe$Just(
-	{
-		currentNum: 0,
-		points: _List_fromArray(
-			[
-				$elm$core$Dict$fromList(
-				_List_fromArray(
-					[
-						_Utils_Tuple2(
-						's',
-						$elm$core$Dict$fromList(
-							_List_fromArray(
-								[
-									_Utils_Tuple2(
-									't',
-									_Utils_Tuple2(0, 0))
-								])))
-					])),
-				$elm$core$Dict$fromList(
-				_List_fromArray(
-					[
-						_Utils_Tuple2('t', $elm$core$Dict$empty)
-					]))
-			])
+var $elm$core$Process$kill = _Scheduler_kill;
+var $elm$core$Dict$foldl = F3(
+	function (func, acc, dict) {
+		foldl:
+		while (true) {
+			if (dict.$ === 'RBEmpty_elm_builtin') {
+				return acc;
+			} else {
+				var key = dict.b;
+				var value = dict.c;
+				var left = dict.d;
+				var right = dict.e;
+				var $temp$func = func,
+					$temp$acc = A3(
+					func,
+					key,
+					value,
+					A3($elm$core$Dict$foldl, func, acc, left)),
+					$temp$dict = right;
+				func = $temp$func;
+				acc = $temp$acc;
+				dict = $temp$dict;
+				continue foldl;
+			}
+		}
 	});
+var $elm$core$Dict$merge = F6(
+	function (leftStep, bothStep, rightStep, leftDict, rightDict, initialResult) {
+		var stepState = F3(
+			function (rKey, rValue, _v0) {
+				stepState:
+				while (true) {
+					var list = _v0.a;
+					var result = _v0.b;
+					if (!list.b) {
+						return _Utils_Tuple2(
+							list,
+							A3(rightStep, rKey, rValue, result));
+					} else {
+						var _v2 = list.a;
+						var lKey = _v2.a;
+						var lValue = _v2.b;
+						var rest = list.b;
+						if (_Utils_cmp(lKey, rKey) < 0) {
+							var $temp$rKey = rKey,
+								$temp$rValue = rValue,
+								$temp$_v0 = _Utils_Tuple2(
+								rest,
+								A3(leftStep, lKey, lValue, result));
+							rKey = $temp$rKey;
+							rValue = $temp$rValue;
+							_v0 = $temp$_v0;
+							continue stepState;
+						} else {
+							if (_Utils_cmp(lKey, rKey) > 0) {
+								return _Utils_Tuple2(
+									list,
+									A3(rightStep, rKey, rValue, result));
+							} else {
+								return _Utils_Tuple2(
+									rest,
+									A4(bothStep, lKey, lValue, rValue, result));
+							}
+						}
+					}
+				}
+			});
+		var _v3 = A3(
+			$elm$core$Dict$foldl,
+			stepState,
+			_Utils_Tuple2(
+				$elm$core$Dict$toList(leftDict),
+				initialResult),
+			rightDict);
+		var leftovers = _v3.a;
+		var intermediateResult = _v3.b;
+		return A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v4, result) {
+					var k = _v4.a;
+					var v = _v4.b;
+					return A3(leftStep, k, v, result);
+				}),
+			intermediateResult,
+			leftovers);
+	});
+var $elm$browser$Browser$Events$Event = F2(
+	function (key, event) {
+		return {event: event, key: key};
+	});
+var $elm$core$Platform$sendToSelf = _Platform_sendToSelf;
+var $elm$browser$Browser$Events$spawn = F3(
+	function (router, key, _v0) {
+		var node = _v0.a;
+		var name = _v0.b;
+		var actualNode = function () {
+			if (node.$ === 'Document') {
+				return _Browser_doc;
+			} else {
+				return _Browser_window;
+			}
+		}();
+		return A2(
+			$elm$core$Task$map,
+			function (value) {
+				return _Utils_Tuple2(key, value);
+			},
+			A3(
+				_Browser_on,
+				actualNode,
+				name,
+				function (event) {
+					return A2(
+						$elm$core$Platform$sendToSelf,
+						router,
+						A2($elm$browser$Browser$Events$Event, key, event));
+				}));
+	});
+var $elm$core$Dict$union = F2(
+	function (t1, t2) {
+		return A3($elm$core$Dict$foldl, $elm$core$Dict$insert, t2, t1);
+	});
+var $elm$browser$Browser$Events$onEffects = F3(
+	function (router, subs, state) {
+		var stepRight = F3(
+			function (key, sub, _v6) {
+				var deads = _v6.a;
+				var lives = _v6.b;
+				var news = _v6.c;
+				return _Utils_Tuple3(
+					deads,
+					lives,
+					A2(
+						$elm$core$List$cons,
+						A3($elm$browser$Browser$Events$spawn, router, key, sub),
+						news));
+			});
+		var stepLeft = F3(
+			function (_v4, pid, _v5) {
+				var deads = _v5.a;
+				var lives = _v5.b;
+				var news = _v5.c;
+				return _Utils_Tuple3(
+					A2($elm$core$List$cons, pid, deads),
+					lives,
+					news);
+			});
+		var stepBoth = F4(
+			function (key, pid, _v2, _v3) {
+				var deads = _v3.a;
+				var lives = _v3.b;
+				var news = _v3.c;
+				return _Utils_Tuple3(
+					deads,
+					A3($elm$core$Dict$insert, key, pid, lives),
+					news);
+			});
+		var newSubs = A2($elm$core$List$map, $elm$browser$Browser$Events$addKey, subs);
+		var _v0 = A6(
+			$elm$core$Dict$merge,
+			stepLeft,
+			stepBoth,
+			stepRight,
+			state.pids,
+			$elm$core$Dict$fromList(newSubs),
+			_Utils_Tuple3(_List_Nil, $elm$core$Dict$empty, _List_Nil));
+		var deadPids = _v0.a;
+		var livePids = _v0.b;
+		var makeNewPids = _v0.c;
+		return A2(
+			$elm$core$Task$andThen,
+			function (pids) {
+				return $elm$core$Task$succeed(
+					A2(
+						$elm$browser$Browser$Events$State,
+						newSubs,
+						A2(
+							$elm$core$Dict$union,
+							livePids,
+							$elm$core$Dict$fromList(pids))));
+			},
+			A2(
+				$elm$core$Task$andThen,
+				function (_v1) {
+					return $elm$core$Task$sequence(makeNewPids);
+				},
+				$elm$core$Task$sequence(
+					A2($elm$core$List$map, $elm$core$Process$kill, deadPids))));
+	});
+var $elm$core$List$maybeCons = F3(
+	function (f, mx, xs) {
+		var _v0 = f(mx);
+		if (_v0.$ === 'Just') {
+			var x = _v0.a;
+			return A2($elm$core$List$cons, x, xs);
+		} else {
+			return xs;
+		}
+	});
+var $elm$core$List$filterMap = F2(
+	function (f, xs) {
+		return A3(
+			$elm$core$List$foldr,
+			$elm$core$List$maybeCons(f),
+			_List_Nil,
+			xs);
+	});
+var $elm$browser$Browser$Events$onSelfMsg = F3(
+	function (router, _v0, state) {
+		var key = _v0.key;
+		var event = _v0.event;
+		var toMessage = function (_v2) {
+			var subKey = _v2.a;
+			var _v3 = _v2.b;
+			var node = _v3.a;
+			var name = _v3.b;
+			var decoder = _v3.c;
+			return _Utils_eq(subKey, key) ? A2(_Browser_decodeEvent, decoder, event) : $elm$core$Maybe$Nothing;
+		};
+		var messages = A2($elm$core$List$filterMap, toMessage, state.subs);
+		return A2(
+			$elm$core$Task$andThen,
+			function (_v1) {
+				return $elm$core$Task$succeed(state);
+			},
+			$elm$core$Task$sequence(
+				A2(
+					$elm$core$List$map,
+					$elm$core$Platform$sendToApp(router),
+					messages)));
+	});
+var $elm$browser$Browser$Events$subMap = F2(
+	function (func, _v0) {
+		var node = _v0.a;
+		var name = _v0.b;
+		var decoder = _v0.c;
+		return A3(
+			$elm$browser$Browser$Events$MySub,
+			node,
+			name,
+			A2($elm$json$Json$Decode$map, func, decoder));
+	});
+_Platform_effectManagers['Browser.Events'] = _Platform_createManager($elm$browser$Browser$Events$init, $elm$browser$Browser$Events$onEffects, $elm$browser$Browser$Events$onSelfMsg, 0, $elm$browser$Browser$Events$subMap);
+var $elm$browser$Browser$Events$subscription = _Platform_leaf('Browser.Events');
+var $elm$browser$Browser$Events$on = F3(
+	function (node, name, decoder) {
+		return $elm$browser$Browser$Events$subscription(
+			A3($elm$browser$Browser$Events$MySub, node, name, decoder));
+	});
+var $elm$browser$Browser$Events$onKeyDown = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keydown');
+var $elm$browser$Browser$Events$onKeyUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keyup');
+var $elm$browser$Browser$Events$onMouseUp = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'mouseup');
+var $elm$json$Json$Decode$string = _Json_decodeString;
+var $author$project$View$subscriptions = function (model) {
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$elm$browser$Browser$Events$onMouseUp(
+				$elm$json$Json$Decode$succeed($author$project$View$MouseUp)),
+				$elm$browser$Browser$Events$onKeyDown(
+				A2(
+					$elm$json$Json$Decode$map,
+					function (key) {
+						return (key === 'Shift') ? $author$project$View$ShiftDown : $author$project$View$Other;
+					},
+					A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string))),
+				$elm$browser$Browser$Events$onKeyUp(
+				A2(
+					$elm$json$Json$Decode$map,
+					function (key) {
+						return (key === 'Shift') ? $author$project$View$ShiftUp : $author$project$View$Other;
+					},
+					A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)))
+			]));
+};
+var $author$project$View$GraphConstructor = {$: 'GraphConstructor'};
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
 		if (maybeValue.$ === 'Just') {
@@ -5424,11 +5643,6 @@ var $elm$core$List$member = F2(
 			},
 			xs);
 	});
-var $elm$core$Dict$singleton = F2(
-	function (key, value) {
-		return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
-	});
-var $elm$core$Debug$todo = _Debug_todo;
 var $elm$core$Dict$get = F2(
 	function (targetKey, dict) {
 		get:
@@ -5833,6 +6047,477 @@ var $elm$core$Dict$update = F3(
 			return A2($elm$core$Dict$remove, targetKey, dictionary);
 		}
 	});
+var $author$project$ViewHelpers$addEdge = F3(
+	function (p1, p2, ls) {
+		if (!ls.b) {
+			return _List_Nil;
+		} else {
+			var c = ls.a;
+			var cols = ls.b;
+			return A2(
+				$elm$core$List$member,
+				p1,
+				$elm$core$Dict$keys(c)) ? A2(
+				$elm$core$List$cons,
+				A3(
+					$elm$core$Dict$update,
+					p1,
+					$elm$core$Maybe$andThen(
+						function (d) {
+							return $elm$core$Maybe$Just(
+								A3(
+									$elm$core$Dict$insert,
+									p2,
+									_Utils_Tuple2(0, 0),
+									d));
+						}),
+					c),
+				cols) : A2(
+				$elm$core$List$cons,
+				c,
+				A3($author$project$ViewHelpers$addEdge, p1, p2, cols));
+		}
+	});
+var $elm$core$Debug$todo = _Debug_todo;
+var $author$project$ViewHelpers$getIndex = F2(
+	function (p, ls) {
+		if (!ls.b) {
+			return _Debug_todo(
+				'ViewHelpers',
+				{
+					start: {line: 11, column: 11},
+					end: {line: 11, column: 21}
+				})('Bad input in insertBetween');
+		} else {
+			var c = ls.a;
+			var cols = ls.b;
+			return A2(
+				$elm$core$List$member,
+				p,
+				$elm$core$Dict$keys(c)) ? 0 : (1 + A2($author$project$ViewHelpers$getIndex, p, cols));
+		}
+	});
+var $author$project$View$addEdgeToModel = F3(
+	function (point1, point, model) {
+		var _v0 = model.graphDraft;
+		if (_v0.$ === 'Nothing') {
+			return model;
+		} else {
+			var currentNum = _v0.a.currentNum;
+			var points = _v0.a.points;
+			if ($elm$core$Basics$abs(
+				A2($author$project$ViewHelpers$getIndex, point1, points) - A2($author$project$ViewHelpers$getIndex, point, points)) > 1) {
+				return _Utils_update(
+					model,
+					{
+						focusedVertex: $elm$core$Maybe$Nothing,
+						graphDraft: $elm$core$Maybe$Just(
+							{currentNum: currentNum, points: points})
+					});
+			} else {
+				var new_points = A3($author$project$ViewHelpers$addEdge, point1, point, points);
+				return _Utils_update(
+					model,
+					{
+						focusedVertex: $elm$core$Maybe$Nothing,
+						graphDraft: $elm$core$Maybe$Just(
+							{currentNum: currentNum, points: new_points})
+					});
+			}
+		}
+	});
+var $elm$core$Dict$singleton = F2(
+	function (key, value) {
+		return A5($elm$core$Dict$RBNode_elm_builtin, $elm$core$Dict$Black, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
+	});
+var $author$project$ViewHelpers$insertPointWithData = F6(
+	function (idx, new_col, name, data, acc, ls) {
+		insertPointWithData:
+		while (true) {
+			var _v0 = _Utils_Tuple3(idx, ls, new_col);
+			if (!_v0.b.b) {
+				if (!_v0.a) {
+					return _Debug_todo(
+						'ViewHelpers',
+						{
+							start: {line: 54, column: 19},
+							end: {line: 54, column: 29}
+						})('Poorly formed input in insertBetween');
+				} else {
+					return _Debug_todo(
+						'ViewHelpers',
+						{
+							start: {line: 55, column: 19},
+							end: {line: 55, column: 29}
+						})('Poorly formed input in insertBetween');
+				}
+			} else {
+				if (!_v0.a) {
+					if (!_v0.c) {
+						var _v1 = _v0.b;
+						var c = _v1.a;
+						var cols = _v1.b;
+						return _Utils_ap(
+							$elm$core$List$reverse(acc),
+							A2(
+								$elm$core$List$cons,
+								A3($elm$core$Dict$insert, name, data, c),
+								cols));
+					} else {
+						var _v2 = _v0.b;
+						var c = _v2.a;
+						var cols = _v2.b;
+						return _Utils_ap(
+							$elm$core$List$reverse(acc),
+							A2(
+								$elm$core$List$cons,
+								c,
+								A2(
+									$elm$core$List$cons,
+									A2($elm$core$Dict$singleton, name, data),
+									cols)));
+					}
+				} else {
+					var _v3 = _v0.b;
+					var c = _v3.a;
+					var cols = _v3.b;
+					var $temp$idx = idx - 1,
+						$temp$new_col = new_col,
+						$temp$name = name,
+						$temp$data = data,
+						$temp$acc = A2($elm$core$List$cons, c, acc),
+						$temp$ls = cols;
+					idx = $temp$idx;
+					new_col = $temp$new_col;
+					name = $temp$name;
+					data = $temp$data;
+					acc = $temp$acc;
+					ls = $temp$ls;
+					continue insertPointWithData;
+				}
+			}
+		}
+	});
+var $elm$core$Debug$log = _Debug_log;
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $elm$core$Dict$isEmpty = function (dict) {
+	if (dict.$ === 'RBEmpty_elm_builtin') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var $author$project$ViewHelpers$removePoint = F3(
+	function (p, acc, ls) {
+		removePoint:
+		while (true) {
+			if (!ls.b) {
+				return _Utils_Tuple2($elm$core$Dict$empty, _List_Nil);
+			} else {
+				var c = ls.a;
+				var cols = ls.b;
+				var _v1 = A2($elm$core$Dict$get, p, c);
+				if (_v1.$ === 'Nothing') {
+					var $temp$p = p,
+						$temp$acc = A2($elm$core$List$cons, c, acc),
+						$temp$ls = cols;
+					p = $temp$p;
+					acc = $temp$acc;
+					ls = $temp$ls;
+					continue removePoint;
+				} else {
+					var d = _v1.a;
+					return $elm$core$Dict$isEmpty(
+						A2($elm$core$Dict$remove, p, c)) ? _Utils_Tuple2(
+						d,
+						_Utils_ap(
+							$elm$core$List$reverse(acc),
+							cols)) : _Utils_Tuple2(
+						d,
+						_Utils_ap(
+							$elm$core$List$reverse(acc),
+							_Utils_ap(
+								_List_fromArray(
+									[
+										A2($elm$core$Dict$remove, p, c)
+									]),
+								cols)));
+				}
+			}
+		}
+	});
+var $author$project$View$changeColumn = F3(
+	function (point1, point2, model) {
+		var _v0 = model.graphDraft;
+		if (_v0.$ === 'Nothing') {
+			return model;
+		} else {
+			var currentNum = _v0.a.currentNum;
+			var points = _v0.a.points;
+			if ($elm$core$Basics$abs(
+				A2($author$project$ViewHelpers$getIndex, point1, points) - A2($author$project$ViewHelpers$getIndex, point2, points)) !== 1) {
+				return _Utils_update(
+					model,
+					{
+						focusedVertex: $elm$core$Maybe$Nothing,
+						graphDraft: $elm$core$Maybe$Just(
+							{currentNum: currentNum, points: points})
+					});
+			} else {
+				var _v1 = A3($author$project$ViewHelpers$removePoint, point1, _List_Nil, points);
+				var p1_data = _v1.a;
+				var tail_points = _v1.b;
+				var point2Idx = A2($author$project$ViewHelpers$getIndex, point2, tail_points);
+				var new_points = A6(
+					$author$project$ViewHelpers$insertPointWithData,
+					A2($elm$core$Debug$log, 'point2idx:', point2Idx),
+					false,
+					A2($elm$core$Debug$log, 'point1:', point1),
+					A2($elm$core$Debug$log, 'P1Data:', p1_data),
+					_List_Nil,
+					A2($elm$core$Debug$log, 'tail_points:', tail_points));
+				return _Utils_update(
+					model,
+					{
+						focusedVertex: $elm$core$Maybe$Nothing,
+						graphDraft: $elm$core$Maybe$Just(
+							{
+								currentNum: currentNum,
+								points: A2($elm$core$Debug$log, 'NewPoints:', new_points)
+							})
+					});
+			}
+		}
+	});
+var $author$project$View$example1 = {
+	adj: A3(
+		$elm$core$Dict$insert,
+		'v6',
+		$elm$core$Dict$empty,
+		A3(
+			$elm$core$Dict$insert,
+			'v4',
+			$elm$core$Dict$fromList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2(
+						'v6',
+						_Utils_Tuple2(6, 0))
+					])),
+			A3(
+				$elm$core$Dict$insert,
+				'v5',
+				$elm$core$Dict$fromList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2(
+							'v2',
+							_Utils_Tuple2(3, 0)),
+							_Utils_Tuple2(
+							'v6',
+							_Utils_Tuple2(2, 0))
+						])),
+				A3(
+					$elm$core$Dict$insert,
+					'v2',
+					$elm$core$Dict$fromList(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'v4',
+								_Utils_Tuple2(6, 0))
+							])),
+					A3(
+						$elm$core$Dict$insert,
+						'v3',
+						$elm$core$Dict$fromList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									'v5',
+									_Utils_Tuple2(4, 0))
+								])),
+						A3(
+							$elm$core$Dict$insert,
+							'v1',
+							$elm$core$Dict$fromList(
+								_List_fromArray(
+									[
+										_Utils_Tuple2(
+										'v3',
+										_Utils_Tuple2(4, 0)),
+										_Utils_Tuple2(
+										'v2',
+										_Utils_Tuple2(3, 0))
+									])),
+							$elm$core$Dict$empty)))))),
+	augmenting_path: _List_Nil,
+	sink: 'v6',
+	source: 'v1'
+};
+var $author$project$ViewHelpers$incrementCapacity = F3(
+	function (p1, p2, ls) {
+		if (!ls.b) {
+			return _List_Nil;
+		} else {
+			var c = ls.a;
+			var cols = ls.b;
+			var _v1 = A2($elm$core$Dict$get, p1, c);
+			if (_v1.$ === 'Nothing') {
+				return A2(
+					$elm$core$List$cons,
+					c,
+					A3($author$project$ViewHelpers$incrementCapacity, p1, p2, cols));
+			} else {
+				return A2(
+					$elm$core$List$cons,
+					A3(
+						$elm$core$Dict$update,
+						p1,
+						$elm$core$Maybe$andThen(
+							function (d) {
+								return $elm$core$Maybe$Just(
+									A3(
+										$elm$core$Dict$update,
+										p2,
+										$elm$core$Maybe$andThen(
+											function (_v2) {
+												var cap = _v2.a;
+												var f = _v2.b;
+												return $elm$core$Maybe$Just(
+													_Utils_Tuple2(cap + 1, f));
+											}),
+										d));
+							}),
+						c),
+					cols);
+			}
+		}
+	});
+var $author$project$View$incrementCapacityOfModel = F3(
+	function (point1, point2, model) {
+		var _v0 = model.graphDraft;
+		if (_v0.$ === 'Nothing') {
+			return model;
+		} else {
+			var currentNum = _v0.a.currentNum;
+			var points = _v0.a.points;
+			return _Utils_update(
+				model,
+				{
+					focusedVertex: $elm$core$Maybe$Nothing,
+					graphDraft: $elm$core$Maybe$Just(
+						{
+							currentNum: currentNum,
+							points: A3($author$project$ViewHelpers$incrementCapacity, point1, point2, points)
+						})
+				});
+		}
+	});
+var $author$project$View$initGraphDraft = $elm$core$Maybe$Just(
+	{
+		currentNum: 0,
+		points: _List_fromArray(
+			[
+				$elm$core$Dict$fromList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2(
+						's',
+						$elm$core$Dict$fromList(
+							_List_fromArray(
+								[
+									_Utils_Tuple2(
+									't',
+									_Utils_Tuple2(0, 0))
+								])))
+					])),
+				$elm$core$Dict$fromList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('t', $elm$core$Dict$empty)
+					]))
+			])
+	});
+var $author$project$ViewHelpers$insertPoint = F4(
+	function (idx, new_col, name, ls) {
+		var _v0 = _Utils_Tuple3(idx, ls, new_col);
+		if (!_v0.b.b) {
+			if (!_v0.a) {
+				return _Debug_todo(
+					'ViewHelpers',
+					{
+						start: {line: 42, column: 19},
+						end: {line: 42, column: 29}
+					})('Poorly formed input in insertBetween');
+			} else {
+				return _Debug_todo(
+					'ViewHelpers',
+					{
+						start: {line: 43, column: 19},
+						end: {line: 43, column: 29}
+					})('Poorly formed input in insertBetween');
+			}
+		} else {
+			if (!_v0.a) {
+				if (!_v0.c) {
+					var _v1 = _v0.b;
+					var c = _v1.a;
+					var cols = _v1.b;
+					return A2(
+						$elm$core$List$cons,
+						A3($elm$core$Dict$insert, name, $elm$core$Dict$empty, c),
+						cols);
+				} else {
+					var _v2 = _v0.b;
+					var c = _v2.a;
+					var cols = _v2.b;
+					return A2(
+						$elm$core$List$cons,
+						c,
+						A2(
+							$elm$core$List$cons,
+							A2($elm$core$Dict$singleton, name, $elm$core$Dict$empty),
+							cols));
+				}
+			} else {
+				var _v3 = _v0.b;
+				var c = _v3.a;
+				var cols = _v3.b;
+				return A2(
+					$elm$core$List$cons,
+					c,
+					A4($author$project$ViewHelpers$insertPoint, idx - 1, new_col, name, cols));
+			}
+		}
+	});
+var $author$project$ViewHelpers$removeEdge = F3(
+	function (p1, p2, ls) {
+		if (!ls.b) {
+			return _List_Nil;
+		} else {
+			var c = ls.a;
+			var cols = ls.b;
+			return A2(
+				$elm$core$List$member,
+				p1,
+				$elm$core$Dict$keys(c)) ? A2(
+				$elm$core$List$cons,
+				A3(
+					$elm$core$Dict$update,
+					p1,
+					$elm$core$Maybe$andThen(
+						function (d) {
+							return $elm$core$Maybe$Just(
+								A2($elm$core$Dict$remove, p2, d));
+						}),
+					c),
+				cols) : A2(
+				$elm$core$List$cons,
+				c,
+				A3($author$project$ViewHelpers$removeEdge, p1, p2, cols));
+		}
+	});
 var $author$project$View$insertBetween = F3(
 	function (point1, point2, model) {
 		var _v0 = model.graphDraft;
@@ -5841,162 +6526,103 @@ var $author$project$View$insertBetween = F3(
 		} else {
 			var currentNum = _v0.a.currentNum;
 			var points = _v0.a.points;
-			var insertPoint = F3(
-				function (idx, new_col, ls) {
-					var _v1 = _Utils_Tuple3(idx, ls, new_col);
-					if (!_v1.b.b) {
-						if (!_v1.a) {
-							return _Debug_todo(
-								'View',
-								{
-									start: {line: 209, column: 29},
-									end: {line: 209, column: 39}
-								})('Poorly formed input in insertBetween');
-						} else {
-							return _Debug_todo(
-								'View',
-								{
-									start: {line: 210, column: 29},
-									end: {line: 210, column: 39}
-								})('Poorly formed input in insertBetween');
-						}
-					} else {
-						if (!_v1.a) {
-							if (!_v1.c) {
-								var _v2 = _v1.b;
-								var c = _v2.a;
-								var cols = _v2.b;
-								return A2(
-									$elm$core$List$cons,
-									A3(
-										$elm$core$Dict$insert,
-										$elm$core$String$fromInt(currentNum),
-										$elm$core$Dict$empty,
-										c),
-									cols);
-							} else {
-								var _v3 = _v1.b;
-								var c = _v3.a;
-								var cols = _v3.b;
-								return A2(
-									$elm$core$List$cons,
-									c,
-									A2(
-										$elm$core$List$cons,
-										A2(
-											$elm$core$Dict$singleton,
-											$elm$core$String$fromInt(currentNum),
-											$elm$core$Dict$empty),
-										cols));
-							}
-						} else {
-							var _v4 = _v1.b;
-							var c = _v4.a;
-							var cols = _v4.b;
-							return A2(
-								$elm$core$List$cons,
-								c,
-								A3(insertPoint, idx - 1, new_col, cols));
-						}
-					}
-				});
-			var getIndex = F2(
-				function (p, ls) {
-					if (!ls.b) {
-						return _Debug_todo(
-							'View',
-							{
-								start: {line: 186, column: 21},
-								end: {line: 186, column: 31}
-							})('Bad input in insertBetween');
-					} else {
-						var c = ls.a;
-						var cols = ls.b;
-						return A2(
-							$elm$core$List$member,
-							p,
-							$elm$core$Dict$keys(c)) ? 0 : (1 + A2(getIndex, p, cols));
-					}
-				});
-			var idxOfPoint1 = A2(getIndex, point1, points);
-			var idxOfPoint2 = A2(getIndex, point2, points);
-			var addEdge = F3(
-				function (p1, p2, ls) {
-					if (!ls.b) {
-						return _List_Nil;
-					} else {
-						var c = ls.a;
-						var cols = ls.b;
-						return A2(
-							$elm$core$List$member,
-							p1,
-							$elm$core$Dict$keys(c)) ? A2(
-							$elm$core$List$cons,
-							A3(
-								$elm$core$Dict$update,
-								p1,
-								$elm$core$Maybe$andThen(
-									function (d) {
-										return $elm$core$Maybe$Just(
-											A3(
-												$elm$core$Dict$insert,
-												p2,
-												_Utils_Tuple2(0, 0),
-												d));
-									}),
-								c),
-							cols) : A2(
-							$elm$core$List$cons,
-							c,
-							A3(addEdge, p1, p2, cols));
-					}
-				});
+			var idxOfPoint2 = A2($author$project$ViewHelpers$getIndex, point2, points);
+			var idxOfPoint1 = A2($author$project$ViewHelpers$getIndex, point1, points);
 			var new_points = _Utils_eq(idxOfPoint1, idxOfPoint2) ? A3(
-				addEdge,
-				$elm$core$String$fromInt(currentNum),
+				$author$project$ViewHelpers$removeEdge,
+				point1,
 				point2,
 				A3(
-					addEdge,
-					point1,
+					$author$project$ViewHelpers$addEdge,
 					$elm$core$String$fromInt(currentNum),
-					A3(insertPoint, idxOfPoint1, false, points))) : (_Utils_eq(idxOfPoint1, idxOfPoint2 - 1) ? A3(
-				addEdge,
-				$elm$core$String$fromInt(currentNum),
+					point2,
+					A3(
+						$author$project$ViewHelpers$addEdge,
+						point1,
+						$elm$core$String$fromInt(currentNum),
+						A4(
+							$author$project$ViewHelpers$insertPoint,
+							idxOfPoint1,
+							false,
+							$elm$core$String$fromInt(currentNum),
+							points)))) : (_Utils_eq(idxOfPoint1, idxOfPoint2 - 1) ? A3(
+				$author$project$ViewHelpers$removeEdge,
+				point1,
 				point2,
 				A3(
-					addEdge,
-					point1,
+					$author$project$ViewHelpers$addEdge,
 					$elm$core$String$fromInt(currentNum),
-					A3(insertPoint, idxOfPoint1, true, points))) : (_Utils_eq(idxOfPoint1, idxOfPoint2 + 1) ? A3(
-				addEdge,
-				$elm$core$String$fromInt(currentNum),
+					point2,
+					A3(
+						$author$project$ViewHelpers$addEdge,
+						point1,
+						$elm$core$String$fromInt(currentNum),
+						A4(
+							$author$project$ViewHelpers$insertPoint,
+							idxOfPoint1,
+							true,
+							$elm$core$String$fromInt(currentNum),
+							points)))) : (_Utils_eq(idxOfPoint1, idxOfPoint2 + 1) ? A3(
+				$author$project$ViewHelpers$removeEdge,
+				point1,
 				point2,
 				A3(
-					addEdge,
-					point1,
+					$author$project$ViewHelpers$addEdge,
 					$elm$core$String$fromInt(currentNum),
-					A3(insertPoint, idxOfPoint2, true, points))) : ((_Utils_cmp(idxOfPoint1, idxOfPoint2 - 1) < 0) ? A3(
-				addEdge,
-				$elm$core$String$fromInt(currentNum),
+					point2,
+					A3(
+						$author$project$ViewHelpers$addEdge,
+						point1,
+						$elm$core$String$fromInt(currentNum),
+						A4(
+							$author$project$ViewHelpers$insertPoint,
+							idxOfPoint2,
+							true,
+							$elm$core$String$fromInt(currentNum),
+							points)))) : ((_Utils_cmp(idxOfPoint1, idxOfPoint2 - 1) < 0) ? A3(
+				$author$project$ViewHelpers$removeEdge,
+				point1,
 				point2,
 				A3(
-					addEdge,
-					point1,
+					$author$project$ViewHelpers$addEdge,
 					$elm$core$String$fromInt(currentNum),
-					A3(insertPoint, idxOfPoint1 + 1, false, points))) : A3(
-				addEdge,
-				$elm$core$String$fromInt(currentNum),
+					point2,
+					A3(
+						$author$project$ViewHelpers$addEdge,
+						point1,
+						$elm$core$String$fromInt(currentNum),
+						A4(
+							$author$project$ViewHelpers$insertPoint,
+							idxOfPoint1 + 1,
+							false,
+							$elm$core$String$fromInt(currentNum),
+							points)))) : A3(
+				$author$project$ViewHelpers$removeEdge,
+				point1,
 				point2,
 				A3(
-					addEdge,
-					point1,
+					$author$project$ViewHelpers$addEdge,
 					$elm$core$String$fromInt(currentNum),
-					A3(insertPoint, idxOfPoint2 + 1, false, points))))));
+					point2,
+					A3(
+						$author$project$ViewHelpers$addEdge,
+						point1,
+						$elm$core$String$fromInt(currentNum),
+						A4(
+							$author$project$ViewHelpers$insertPoint,
+							idxOfPoint2 + 1,
+							false,
+							$elm$core$String$fromInt(currentNum),
+							points)))))));
 			return _Utils_update(
 				model,
 				{
+					focusedVertex: $elm$core$Maybe$Nothing,
 					graphDraft: $elm$core$Maybe$Just(
-						{currentNum: currentNum + 1, points: new_points})
+						{
+							currentNum: currentNum + 1,
+							points: A2($elm$core$Debug$log, 'NewPointsInsertBtwn:', new_points)
+						})
 				});
 		}
 	});
@@ -6062,35 +6688,6 @@ var $elm$core$Set$member = F2(
 		return A2($elm$core$Dict$member, key, dict);
 	});
 var $elm$core$Basics$not = _Basics_not;
-var $elm$core$Dict$foldl = F3(
-	function (func, acc, dict) {
-		foldl:
-		while (true) {
-			if (dict.$ === 'RBEmpty_elm_builtin') {
-				return acc;
-			} else {
-				var key = dict.b;
-				var value = dict.c;
-				var left = dict.d;
-				var right = dict.e;
-				var $temp$func = func,
-					$temp$acc = A3(
-					func,
-					key,
-					value,
-					A3($elm$core$Dict$foldl, func, acc, left)),
-					$temp$dict = right;
-				func = $temp$func;
-				acc = $temp$acc;
-				dict = $temp$dict;
-				continue foldl;
-			}
-		}
-	});
-var $elm$core$Dict$union = F2(
-	function (t1, t2) {
-		return A3($elm$core$Dict$foldl, $elm$core$Dict$insert, t2, t1);
-	});
 var $elm$core$Set$union = F2(
 	function (_v0, _v1) {
 		var dict1 = _v0.a;
@@ -6285,6 +6882,7 @@ var $author$project$View$networkToModel = F2(
 		return _Utils_update(
 			model,
 			{
+				focusedVertex: $elm$core$Maybe$Nothing,
 				graph: $elm$core$Maybe$Just(
 					{
 						edges: edges,
@@ -6305,15 +6903,15 @@ var $author$project$View$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{graph: $elm$core$Maybe$Nothing, graphDraft: $author$project$View$initGraphDraft, page: $author$project$View$GraphConstructor}),
+						{focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $author$project$View$initGraphDraft, page: $author$project$View$GraphConstructor}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToHome':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$View$Home}),
+						{focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$View$Home}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'ClickedOnEdge':
 				var point1 = msg.a.point1;
 				var point2 = msg.a.point2;
 				var _v1 = model.graphDraft;
@@ -6325,6 +6923,54 @@ var $author$project$View$update = F2(
 						A3($author$project$View$insertBetween, point1, point2, model),
 						$elm$core$Platform$Cmd$none);
 				}
+			case 'MouseDownOnVertex':
+				var point = msg.a;
+				return (point === 't') ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							focusedVertex: $elm$core$Maybe$Just(point)
+						}),
+					$elm$core$Platform$Cmd$none);
+			case 'MouseUpOnVertex':
+				var point = msg.a;
+				var _v2 = model.focusedVertex;
+				if (_v2.$ === 'Nothing') {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				} else {
+					var point1 = _v2.a;
+					return model.shiftDown ? ((_Utils_eq(point, point1) || (point === 's')) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+						A3($author$project$View$addEdgeToModel, point1, point, model),
+						$elm$core$Platform$Cmd$none)) : (((point1 === 's') || ((point1 === 't') || ((point === 's') || ((point === 't') || _Utils_eq(point, point1))))) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
+						A3($author$project$View$changeColumn, point1, point, model),
+						$elm$core$Platform$Cmd$none));
+				}
+			case 'MouseUp':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{focusedVertex: $elm$core$Maybe$Nothing}),
+					$elm$core$Platform$Cmd$none);
+			case 'ShiftDown':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{shiftDown: true}),
+					$elm$core$Platform$Cmd$none);
+			case 'ShiftUp':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{shiftDown: false}),
+					$elm$core$Platform$Cmd$none);
+			case 'ClickCapacity':
+				var p1 = msg.a;
+				var p2 = msg.b;
+				return _Utils_Tuple2(
+					A3($author$project$View$incrementCapacityOfModel, p1, p2, model),
+					$elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
 var $author$project$View$ToHome = {$: 'ToHome'};
@@ -6602,9 +7248,6 @@ var $timjs$elm_collage$Collage$Layout$impose = F2(
 		return $timjs$elm_collage$Collage$Core$collage(
 			A2($timjs$elm_collage$Collage$Core$Subcollage, front, back));
 	});
-var $elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Attrs = function (a) {
 	return {$: 'Attrs', a: a};
 };
@@ -7778,15 +8421,123 @@ var $author$project$View$algo_view = function (model) {
 					]))
 			]));
 };
-var $author$project$View$ClickedOn = function (a) {
-	return {$: 'ClickedOn', a: a};
+var $author$project$View$ClickCapacity = F2(
+	function (a, b) {
+		return {$: 'ClickCapacity', a: a, b: b};
+	});
+var $author$project$View$ClickedOnEdge = function (a) {
+	return {$: 'ClickedOnEdge', a: a};
 };
+var $author$project$View$MouseDownOnVertex = function (a) {
+	return {$: 'MouseDownOnVertex', a: a};
+};
+var $author$project$View$MouseUpOnVertex = function (a) {
+	return {$: 'MouseUpOnVertex', a: a};
+};
+var $elm$core$Dict$diff = F2(
+	function (t1, t2) {
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (k, v, t) {
+					return A2($elm$core$Dict$remove, k, t);
+				}),
+			t1,
+			t2);
+	});
+var $elm$core$Set$diff = F2(
+	function (_v0, _v1) {
+		var dict1 = _v0.a;
+		var dict2 = _v1.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$diff, dict1, dict2));
+	});
+var $elm$core$Dict$filter = F2(
+	function (isGood, dict) {
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (k, v, d) {
+					return A2(isGood, k, v) ? A3($elm$core$Dict$insert, k, v, d) : d;
+				}),
+			$elm$core$Dict$empty,
+			dict);
+	});
+var $elm$core$Dict$intersect = F2(
+	function (t1, t2) {
+		return A2(
+			$elm$core$Dict$filter,
+			F2(
+				function (k, _v0) {
+					return A2($elm$core$Dict$member, k, t2);
+				}),
+			t1);
+	});
+var $elm$core$Set$intersect = F2(
+	function (_v0, _v1) {
+		var dict1 = _v0.a;
+		var dict2 = _v1.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$intersect, dict1, dict2));
+	});
+var $elm$core$Set$remove = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$remove, key, dict));
+	});
 var $author$project$View$graphDraftToGraph = function (model) {
 	var _v0 = model.graphDraft;
 	if (_v0.$ === 'Nothing') {
 		return {edges: _List_Nil, points: _List_Nil};
 	} else {
 		var draft = _v0.a;
+		var topologicalSortCol = function (col) {
+			var startNodes = A2(
+				$elm$core$Set$diff,
+				$elm$core$Set$fromList(
+					$elm$core$Dict$keys(col)),
+				$elm$core$Set$fromList(
+					A2(
+						$elm$core$List$concatMap,
+						$elm$core$Dict$keys,
+						$elm$core$Dict$values(col))));
+			var sorter = F2(
+				function (acc, start) {
+					sorter:
+					while (true) {
+						var _v10 = $elm$core$Set$toList(start);
+						if (!_v10.b) {
+							return $elm$core$List$reverse(acc);
+						} else {
+							var x = _v10.a;
+							var xs = _v10.b;
+							var tailStart = A2($elm$core$Set$remove, x, start);
+							var nextVerts = A2(
+								$elm$core$Set$intersect,
+								$elm$core$Set$fromList(
+									$elm$core$Dict$keys(col)),
+								A2(
+									$elm$core$Maybe$withDefault,
+									$elm$core$Set$empty,
+									A2(
+										$elm$core$Maybe$andThen,
+										function (d) {
+											return $elm$core$Maybe$Just(
+												$elm$core$Set$fromList(
+													$elm$core$Dict$keys(d)));
+										},
+										A2($elm$core$Dict$get, x, col))));
+							var $temp$acc = A2($elm$core$List$cons, x, acc),
+								$temp$start = A2($elm$core$Set$union, tailStart, nextVerts);
+							acc = $temp$acc;
+							start = $temp$start;
+							continue sorter;
+						}
+					}
+				});
+			return A2(sorter, _List_Nil, startNodes);
+		};
 		var genColPos = F2(
 			function (x, col) {
 				if (col.b && (!col.b.b)) {
@@ -7810,7 +8561,7 @@ var $author$project$View$graphDraftToGraph = function (model) {
 						col);
 				}
 			});
-		var columns = A2($elm$core$List$map, $elm$core$Dict$keys, draft.points);
+		var columns = A2($elm$core$List$map, topologicalSortCol, draft.points);
 		var num_columns = $elm$core$List$length(columns);
 		var verts = A3(
 			$elm$core$List$foldr,
@@ -7919,6 +8670,27 @@ var $timjs$elm_collage$Collage$Events$simpleOn = function (event) {
 		$elm$json$Json$Decode$succeed);
 };
 var $timjs$elm_collage$Collage$Events$onClick = $timjs$elm_collage$Collage$Events$simpleOn('click');
+var $timjs$elm_collage$Collage$Events$onDoubleClick = $timjs$elm_collage$Collage$Events$simpleOn('dblclick');
+var $elm$json$Json$Decode$float = _Json_decodeFloat;
+var $timjs$elm_collage$Collage$Events$mouseOn = F2(
+	function (event, msg) {
+		return A2(
+			$timjs$elm_collage$Collage$Events$on,
+			event,
+			A2(
+				$elm$json$Json$Decode$map,
+				msg,
+				A3(
+					$elm$json$Json$Decode$map2,
+					F2(
+						function (x, y) {
+							return _Utils_Tuple2(x, y);
+						}),
+					A2($elm$json$Json$Decode$field, 'clientX', $elm$json$Json$Decode$float),
+					A2($elm$json$Json$Decode$field, 'clientY', $elm$json$Json$Decode$float))));
+	});
+var $timjs$elm_collage$Collage$Events$onMouseDown = $timjs$elm_collage$Collage$Events$mouseOn('mousedown');
+var $timjs$elm_collage$Collage$Events$onMouseUp = $timjs$elm_collage$Collage$Events$mouseOn('mouseup');
 var $author$project$View$graph_constructor_view = function (model) {
 	var graph = $author$project$View$graphDraftToGraph(model);
 	var createEdge = function (e) {
@@ -7938,7 +8710,7 @@ var $author$project$View$graph_constructor_view = function (model) {
 			});
 		return A2(
 			$timjs$elm_collage$Collage$Events$onClick,
-			$author$project$View$ClickedOn(
+			$author$project$View$ClickedOnEdge(
 				{point1: e.point1.name, point2: e.point2.name}),
 			$timjs$elm_collage$Collage$group(
 				_List_fromArray(
@@ -7974,55 +8746,64 @@ var $author$project$View$graph_constructor_view = function (model) {
 							_Utils_Tuple2(midpoint.x, midpoint.y),
 							A2(rotate, -10, 20.0))),
 						A2(
-						$timjs$elm_collage$Collage$shift,
-						A2(rotate, -90, 50),
-						$timjs$elm_collage$Collage$rendered(
-							A2(
-								$timjs$elm_collage$Collage$Text$color,
-								$avh4$elm_color$Color$green,
-								$timjs$elm_collage$Collage$Text$fromString(
-									$elm$core$String$fromInt(e.capacity))))),
+						$timjs$elm_collage$Collage$Events$onDoubleClick,
+						A2($author$project$View$ClickCapacity, e.point1.name, e.point2.name),
 						A2(
-						$timjs$elm_collage$Collage$shift,
-						A2(rotate, 90, 50),
-						$timjs$elm_collage$Collage$rendered(
-							A2(
-								$timjs$elm_collage$Collage$Text$color,
-								$avh4$elm_color$Color$red,
-								$timjs$elm_collage$Collage$Text$fromString(
-									$elm$core$String$fromInt(e.flow)))))
+							$timjs$elm_collage$Collage$shift,
+							A2(rotate, -90, 50),
+							$timjs$elm_collage$Collage$rendered(
+								A2(
+									$timjs$elm_collage$Collage$Text$color,
+									$avh4$elm_color$Color$green,
+									$timjs$elm_collage$Collage$Text$fromString(
+										$elm$core$String$fromInt(e.capacity))))))
 					])));
 	};
 	var edges = A2($elm$core$List$map, createEdge, graph.edges);
 	var createCirc = function (p) {
 		return A2(
-			$timjs$elm_collage$Collage$Layout$impose,
-			$timjs$elm_collage$Collage$group(
-				_List_fromArray(
-					[
-						A2(
-						$timjs$elm_collage$Collage$shift,
-						_Utils_Tuple2(p.x, p.y),
-						A2(
-							$timjs$elm_collage$Collage$outlined,
-							A2(
-								$timjs$elm_collage$Collage$solid,
-								$timjs$elm_collage$Collage$thick,
-								$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
-							$timjs$elm_collage$Collage$circle(25))),
-						A2(
-						$timjs$elm_collage$Collage$shift,
-						_Utils_Tuple2(p.x, p.y),
-						$timjs$elm_collage$Collage$rendered(
-							$timjs$elm_collage$Collage$Text$fromString(p.name)))
-					])),
+			$timjs$elm_collage$Collage$Events$onMouseUp,
+			function (_v1) {
+				return $author$project$View$MouseUpOnVertex(p.name);
+			},
 			A2(
-				$timjs$elm_collage$Collage$shift,
-				_Utils_Tuple2(p.x, p.y),
+				$timjs$elm_collage$Collage$Events$onMouseDown,
+				function (_v0) {
+					return $author$project$View$MouseDownOnVertex(p.name);
+				},
 				A2(
-					$timjs$elm_collage$Collage$filled,
-					$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$white),
-					$timjs$elm_collage$Collage$circle(25))));
+					$timjs$elm_collage$Collage$Layout$impose,
+					$timjs$elm_collage$Collage$group(
+						_List_fromArray(
+							[
+								A2(
+								$timjs$elm_collage$Collage$shift,
+								_Utils_Tuple2(p.x, p.y),
+								(_Utils_eq(
+									$elm$core$Maybe$Just(p.name),
+									model.focusedVertex) ? $timjs$elm_collage$Collage$outlined(
+									A2(
+										$timjs$elm_collage$Collage$solid,
+										$timjs$elm_collage$Collage$thick,
+										$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$red))) : $timjs$elm_collage$Collage$outlined(
+									A2(
+										$timjs$elm_collage$Collage$solid,
+										$timjs$elm_collage$Collage$thick,
+										$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue))))(
+									$timjs$elm_collage$Collage$circle(25))),
+								A2(
+								$timjs$elm_collage$Collage$shift,
+								_Utils_Tuple2(p.x, p.y),
+								$timjs$elm_collage$Collage$rendered(
+									$timjs$elm_collage$Collage$Text$fromString(p.name)))
+							])),
+					A2(
+						$timjs$elm_collage$Collage$shift,
+						_Utils_Tuple2(p.x, p.y),
+						A2(
+							$timjs$elm_collage$Collage$filled,
+							$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$white),
+							$timjs$elm_collage$Collage$circle(25))))));
 	};
 	var points = A2($elm$core$List$map, createCirc, graph.points);
 	var foreground = A2(
