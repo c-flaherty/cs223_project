@@ -3,7 +3,7 @@ module View exposing (main)
 -- Add/modify imports if you'd like. ---------------------------------
 
 import Browser
-import Html exposing (Html)
+import Html exposing (Html, text)
 import Html.Attributes
 import Debug
 import Collage exposing (circle, rectangle, filled, uniform, traced)
@@ -18,6 +18,9 @@ import Set exposing (Set)
 import Dict exposing (Dict)
 import Maybe
 import Collage.Layout
+import Bootstrap.Grid as Grid
+import Bootstrap.CDN as CDN
+import Bootstrap.Button as Button
 
 type alias Network =
   {
@@ -50,6 +53,7 @@ example =
 
 type alias Model = 
   {
+    run : Bool,
     points : List Point,
     edges : List Edge
   }
@@ -73,12 +77,13 @@ networkToModel g =
     columns = genModelColumns g.adj Set.empty [[g.source]] [g.source]
     num_columns = List.length columns 
 
+    genColPos : Float -> List String -> List Point
     genColPos x col = 
       case col of 
         [v] -> [{name = v, x=x, y=toFloat 250}]
         _ -> List.indexedMap (\y_idx -> \v -> {name = v, x=x, y=toFloat (y_idx*(500//((List.length col) - 1)))}) col
 
-    verts = List.indexedMap (\x_idx -> \col -> genColPos (toFloat (x_idx*(1000//(num_columns - 1)))) col) columns
+    verts = List.indexedMap (\x_idx -> \col -> genColPos ((toFloat x_idx)*(1000.0/(toFloat (num_columns - 1)))) col) columns
       |> List.concat
       |> List.foldr (\p -> \d -> Dict.insert p.name {name=p.name, x=p.x,y=p.y} d) Dict.empty
 
@@ -99,7 +104,7 @@ networkToModel g =
             removeMaybe tmp
         )
   in
-    {points = Dict.values verts, edges = edges}
+    {points = Dict.values verts, edges = edges, run=False}
 
 initModel : Model 
 initModel = networkToModel example
@@ -120,6 +125,7 @@ init () =
 
 type Msg = MouseDown 
   | Tick
+  | Start
 
 subscriptions : Model -> Sub Msg 
 subscriptions model = 
@@ -127,10 +133,12 @@ subscriptions model =
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
-  (model, Cmd.none)
+  case msg of  
+    Start -> ({ model | run=True}, Cmd.none)
+    _ -> (model, Cmd.none)
 
-view : Model -> Html Msg 
-view model = 
+algo_view : Model -> Html Msg 
+algo_view model = 
   let 
     createCirc : Point -> Collage.Collage msg
     createCirc p = 
@@ -184,8 +192,9 @@ view model =
 
     foreground = Collage.group (points ++ edges)
       |> Collage.shift (-500, -250)
-    background = rectangle 1250 1250
+    background = rectangle 1000 600
       |> Collage.outlined Collage.invisible
+      |> Collage.shift (-500, -300)
 
     scene = Collage.Layout.impose foreground background 
 
@@ -195,14 +204,40 @@ view model =
 
     all = Collage.Layout.vertical <| [scene, hspace, text]
   in
-    Html.div 
+    Grid.container
       [
         Html.Attributes.style "height" "100vh",
         Html.Attributes.style "display" "grid",
         Html.Attributes.style "place-items" "center"
       ]
       [ 
+        CDN.stylesheet,
         all
           |> svg
       ]
 
+construct_graph_view : Model -> Html Msg 
+construct_graph_view model = 
+  let
+      a = 1
+  in
+    Grid.container [
+      Html.Attributes.style "height" "100vh",
+      Html.Attributes.style "display" "grid",
+      Html.Attributes.style "place-items" "center"
+    ]
+      [
+        CDN.stylesheet,
+        body model
+      ]
+
+body : Model -> Html Msg 
+body model = 
+  Button.button [Button.primary, Button.onClick Start] [text "Begin"]
+
+view : Model -> Html Msg 
+view model =
+  if model.run then 
+    algo_view model 
+  else 
+    construct_graph_view model

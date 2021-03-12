@@ -5592,7 +5592,7 @@ var $author$project$View$networkToModel = function (g) {
 				$elm$core$List$indexedMap,
 				function (x_idx) {
 					return function (col) {
-						return A2(genColPos, x_idx * ((1000 / (num_columns - 1)) | 0), col);
+						return A2(genColPos, x_idx * (1000.0 / (num_columns - 1)), col);
 					};
 				},
 				columns)));
@@ -5659,7 +5659,8 @@ var $author$project$View$networkToModel = function (g) {
 					$elm$core$Dict$toList(g.adj)))));
 	return {
 		edges: edges,
-		points: $elm$core$Dict$values(verts)
+		points: $elm$core$Dict$values(verts),
+		run: false
 	};
 };
 var $author$project$View$initModel = $author$project$View$networkToModel($author$project$View$example);
@@ -5675,7 +5676,15 @@ var $author$project$View$subscriptions = function (model) {
 };
 var $author$project$View$update = F2(
 	function (msg, model) {
-		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		if (msg.$ === 'Start') {
+			return _Utils_Tuple2(
+				_Utils_update(
+					model,
+					{run: true}),
+				$elm$core$Platform$Cmd$none);
+		} else {
+			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		}
 	});
 var $avh4$elm_color$Color$RgbaSpace = F4(
 	function (a, b, c, d) {
@@ -5701,8 +5710,29 @@ var $timjs$elm_collage$Collage$Text$color = F2(
 				{color: newcolor}),
 			str);
 	});
-var $elm$core$Basics$cos = _Basics_cos;
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
 var $elm$html$Html$div = _VirtualDom_node('div');
+var $rundis$elm_bootstrap$Bootstrap$Grid$container = F2(
+	function (attributes, children) {
+		return A2(
+			$elm$html$Html$div,
+			_Utils_ap(
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('container')
+					]),
+				attributes),
+			children);
+	});
+var $elm$core$Basics$cos = _Basics_cos;
 var $timjs$elm_collage$Collage$Flat = {$: 'Flat'};
 var $timjs$elm_collage$Collage$Sharp = {$: 'Sharp'};
 var $avh4$elm_color$Color$black = A4($avh4$elm_color$Color$RgbaSpace, 0 / 255, 0 / 255, 0 / 255, 1.0);
@@ -5849,6 +5879,27 @@ var $timjs$elm_collage$Collage$Layout$spacer = F2(
 var $elm$core$Basics$sqrt = _Basics_sqrt;
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
+var $elm$virtual_dom$VirtualDom$node = function (tag) {
+	return _VirtualDom_node(
+		_VirtualDom_noScript(tag));
+};
+var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
+var $rundis$elm_bootstrap$Bootstrap$CDN$stylesheet = A3(
+	$elm$html$Html$node,
+	'link',
+	_List_fromArray(
+		[
+			$elm$html$Html$Attributes$rel('stylesheet'),
+			$elm$html$Html$Attributes$href('https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css')
+		]),
+	_List_Nil);
 var $timjs$elm_collage$Collage$opposite = function (_v0) {
 	var x = _v0.a;
 	var y = _v0.b;
@@ -6815,7 +6866,7 @@ var $timjs$elm_collage$Collage$Layout$vertical = A2(
 	$timjs$elm_collage$Collage$Layout$beside($timjs$elm_collage$Collage$Layout$Down),
 	$timjs$elm_collage$Collage$Layout$empty);
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
-var $author$project$View$view = function (model) {
+var $author$project$View$algo_view = function (model) {
 	var text = $timjs$elm_collage$Collage$rendered(
 		$timjs$elm_collage$Collage$Text$fromString('Hi!'));
 	var hspace = A2($timjs$elm_collage$Collage$Layout$spacer, 0, 50);
@@ -6925,15 +6976,18 @@ var $author$project$View$view = function (model) {
 		$timjs$elm_collage$Collage$group(
 			_Utils_ap(points, edges)));
 	var background = A2(
-		$timjs$elm_collage$Collage$outlined,
-		$timjs$elm_collage$Collage$invisible,
-		A2($timjs$elm_collage$Collage$rectangle, 1250, 1250));
+		$timjs$elm_collage$Collage$shift,
+		_Utils_Tuple2(-500, -300),
+		A2(
+			$timjs$elm_collage$Collage$outlined,
+			$timjs$elm_collage$Collage$invisible,
+			A2($timjs$elm_collage$Collage$rectangle, 1000, 600)));
 	var scene = A2($timjs$elm_collage$Collage$Layout$impose, foreground, background);
 	var all = $timjs$elm_collage$Collage$Layout$vertical(
 		_List_fromArray(
 			[scene, hspace, text]));
 	return A2(
-		$elm$html$Html$div,
+		$rundis$elm_bootstrap$Bootstrap$Grid$container,
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'height', '100vh'),
@@ -6942,8 +6996,239 @@ var $author$project$View$view = function (model) {
 			]),
 		_List_fromArray(
 			[
+				$rundis$elm_bootstrap$Bootstrap$CDN$stylesheet,
 				$timjs$elm_collage$Collage$Render$svg(all)
 			]));
+};
+var $author$project$View$Start = {$: 'Start'};
+var $elm$html$Html$button = _VirtualDom_node('button');
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (maybeValue.$ === 'Just') {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$applyModifier = F2(
+	function (modifier, options) {
+		switch (modifier.$) {
+			case 'Size':
+				var size = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						size: $elm$core$Maybe$Just(size)
+					});
+			case 'Coloring':
+				var coloring = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						coloring: $elm$core$Maybe$Just(coloring)
+					});
+			case 'Block':
+				return _Utils_update(
+					options,
+					{block: true});
+			case 'Disabled':
+				var val = modifier.a;
+				return _Utils_update(
+					options,
+					{disabled: val});
+			default:
+				var attrs = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						attributes: _Utils_ap(options.attributes, attrs)
+					});
+		}
+	});
+var $elm$html$Html$Attributes$classList = function (classes) {
+	return $elm$html$Html$Attributes$class(
+		A2(
+			$elm$core$String$join,
+			' ',
+			A2(
+				$elm$core$List$map,
+				$elm$core$Tuple$first,
+				A2($elm$core$List$filter, $elm$core$Tuple$second, classes))));
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$defaultOptions = {attributes: _List_Nil, block: false, coloring: $elm$core$Maybe$Nothing, disabled: false, size: $elm$core$Maybe$Nothing};
+var $elm$json$Json$Encode$bool = _Json_wrap;
+var $elm$html$Html$Attributes$boolProperty = F2(
+	function (key, bool) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$bool(bool));
+	});
+var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass = function (role) {
+	switch (role.$) {
+		case 'Primary':
+			return 'primary';
+		case 'Secondary':
+			return 'secondary';
+		case 'Success':
+			return 'success';
+		case 'Info':
+			return 'info';
+		case 'Warning':
+			return 'warning';
+		case 'Danger':
+			return 'danger';
+		case 'Dark':
+			return 'dark';
+		case 'Light':
+			return 'light';
+		default:
+			return 'link';
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption = function (size) {
+	switch (size.$) {
+		case 'XS':
+			return $elm$core$Maybe$Nothing;
+		case 'SM':
+			return $elm$core$Maybe$Just('sm');
+		case 'MD':
+			return $elm$core$Maybe$Just('md');
+		case 'LG':
+			return $elm$core$Maybe$Just('lg');
+		default:
+			return $elm$core$Maybe$Just('xl');
+	}
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$buttonAttributes = function (modifiers) {
+	var options = A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$Internal$Button$applyModifier, $rundis$elm_bootstrap$Bootstrap$Internal$Button$defaultOptions, modifiers);
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$classList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('btn', true),
+						_Utils_Tuple2('btn-block', options.block),
+						_Utils_Tuple2('disabled', options.disabled)
+					])),
+				$elm$html$Html$Attributes$disabled(options.disabled)
+			]),
+		_Utils_ap(
+			function () {
+				var _v0 = A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption, options.size);
+				if (_v0.$ === 'Just') {
+					var s = _v0.a;
+					return _List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('btn-' + s)
+						]);
+				} else {
+					return _List_Nil;
+				}
+			}(),
+			_Utils_ap(
+				function () {
+					var _v1 = options.coloring;
+					if (_v1.$ === 'Just') {
+						if (_v1.a.$ === 'Roled') {
+							var role = _v1.a.a;
+							return _List_fromArray(
+								[
+									$elm$html$Html$Attributes$class(
+									'btn-' + $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass(role))
+								]);
+						} else {
+							var role = _v1.a.a;
+							return _List_fromArray(
+								[
+									$elm$html$Html$Attributes$class(
+									'btn-outline-' + $rundis$elm_bootstrap$Bootstrap$Internal$Button$roleClass(role))
+								]);
+						}
+					} else {
+						return _List_Nil;
+					}
+				}(),
+				options.attributes)));
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$button = F2(
+	function (options, children) {
+		return A2(
+			$elm$html$Html$button,
+			$rundis$elm_bootstrap$Bootstrap$Internal$Button$buttonAttributes(options),
+			children);
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Attrs = function (a) {
+	return {$: 'Attrs', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$attrs = function (attrs_) {
+	return $rundis$elm_bootstrap$Bootstrap$Internal$Button$Attrs(attrs_);
+};
+var $elm$virtual_dom$VirtualDom$MayPreventDefault = function (a) {
+	return {$: 'MayPreventDefault', a: a};
+};
+var $elm$html$Html$Events$preventDefaultOn = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$MayPreventDefault(decoder));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Button$onClick = function (message) {
+	return $rundis$elm_bootstrap$Bootstrap$Button$attrs(
+		_List_fromArray(
+			[
+				A2(
+				$elm$html$Html$Events$preventDefaultOn,
+				'click',
+				$elm$json$Json$Decode$succeed(
+					_Utils_Tuple2(message, true)))
+			]));
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring = function (a) {
+	return {$: 'Coloring', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary = {$: 'Primary'};
+var $rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled = function (a) {
+	return {$: 'Roled', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Button$primary = $rundis$elm_bootstrap$Bootstrap$Internal$Button$Coloring(
+	$rundis$elm_bootstrap$Bootstrap$Internal$Button$Roled($rundis$elm_bootstrap$Bootstrap$Internal$Button$Primary));
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$View$body = function (model) {
+	return A2(
+		$rundis$elm_bootstrap$Bootstrap$Button$button,
+		_List_fromArray(
+			[
+				$rundis$elm_bootstrap$Bootstrap$Button$primary,
+				$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$View$Start)
+			]),
+		_List_fromArray(
+			[
+				$elm$html$Html$text('Begin')
+			]));
+};
+var $author$project$View$construct_graph_view = function (model) {
+	var a = 1;
+	return A2(
+		$rundis$elm_bootstrap$Bootstrap$Grid$container,
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'height', '100vh'),
+				A2($elm$html$Html$Attributes$style, 'display', 'grid'),
+				A2($elm$html$Html$Attributes$style, 'place-items', 'center')
+			]),
+		_List_fromArray(
+			[
+				$rundis$elm_bootstrap$Bootstrap$CDN$stylesheet,
+				$author$project$View$body(model)
+			]));
+};
+var $author$project$View$view = function (model) {
+	return model.run ? $author$project$View$algo_view(model) : $author$project$View$construct_graph_view(model);
 };
 var $author$project$View$main = $elm$browser$Browser$element(
 	{init: $author$project$View$init, subscriptions: $author$project$View$subscriptions, update: $author$project$View$update, view: $author$project$View$view});
