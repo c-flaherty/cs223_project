@@ -32,7 +32,6 @@ import ViewHelpers exposing(..)
 import Browser.Events
 import Maybe
 
-import Queue
 import Collage.Events
 
 type alias Network =
