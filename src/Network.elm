@@ -1,6 +1,7 @@
 module Network exposing(..)
 import Dict exposing (Dict)
 import Debug
+import Set exposing (Set)
 
 type alias Network =
   {
@@ -18,36 +19,32 @@ fromMaybe x =
     Just y -> y
     Nothing -> Debug.todo "fromJust Nothing"
 
+------------------------------------------------- Network API ------------------------------------------------------
 empty : Network 
 empty =
   {source="", sink="", adj=Dict.empty}
 
-{-
-addEdge : Network -> String -> String -> Capacity -> Network
-addEdge network node1 node2 capacity =
-  let 
-    new_edge = Dict.singleton node1 (Dict.singleton node2 (c, 0))
-  in
-    case network of
-      Empty ->
-        new_edge
-      _ ->
-        Dict.union network new_edge
--}
+addEdge =
+  Debug.todo "addEdge"
 
-{-
-deleteEdge : Network -> String -> String -> Network
-deleteEdge node1 node2 network =
-  if Dict.member node1 network then
-    let 
-      network_minus_node1 = Dict.remove node1 network
-      node1_adj = Dict.get node1 network
-      node1_adj_minus_node2 = Dict.remove node2 node1_adj
-    in
-      Dict.union node1_adj_minus_node2 network_minus_node1
-  else
-    network
--}
+deleteEdge =
+  Debug.todo "deleteEdge"
+
+getFlow : Network -> String -> String -> Flow
+getFlow network u v =
+  let
+    u_adj = Maybe.withDefault Dict.empty (Dict.get u network.adj)
+    (c, f) = Maybe.withDefault (-100, 100) (Dict.get v u_adj)
+  in
+    f
+
+getCapacity : Network -> String -> String -> Capacity
+getCapacity network u v =
+  let
+    u_adj = Maybe.withDefault Dict.empty (Dict.get u network.adj)
+    (c, f) = Maybe.withDefault (-100, -100) (Dict.get v u_adj)
+  in
+    c
 
 updateCapacity : Network -> String -> String -> Capacity -> Network
 updateCapacity network u v capacity =
@@ -83,34 +80,100 @@ updateFlow network u v flow =
   in
     {source=network.source, sink=network.sink, adj=upd_adj}
 
-getFlow : Network -> String -> String -> Flow
-getFlow network u v =
+getNeighbors : Network -> String -> List (String)
+getNeighbors network u =
   let
-    u_adj = Maybe.withDefault Dict.empty (Dict.get u network.adj)
-    (c, f) = Maybe.withDefault (-100, 100) (Dict.get v u_adj)
+    nbrs_dict_list = Dict.get u network.adj |> Maybe.withDefault Dict.empty |> Dict.toList
   in
-    f
-
-getCapacity : Network -> String -> String -> Capacity
-getCapacity network u v =
-  let
-    u_adj = Maybe.withDefault Dict.empty (Dict.get u network.adj)
-    (c, f) = Maybe.withDefault (-100, -100) (Dict.get v u_adj)
-  in
-    c
-
-bfs : Network -> String -> String -> Maybe Path
-bfs network source sink =
-  Debug.todo "bfs"
+    List.map (Tuple.first) nbrs_dict_list
 
 calcFlow : Network -> Flow
 calcFlow network =
-  Debug.todo "calcFlow"
+  let
+    foo acc nbrs =
+      case nbrs of
+        nbr :: nbrs_rest ->
+          {-
+          let
+            nbr = nbr_dict 
+              |> Dict.keys
+              |> List.head
+              |> Maybe.withDefault "DEFAULT"
+          in
+          -}
+          foo (acc + (getFlow network network.source nbr)) nbrs_rest
+        [] ->
+          acc
+  in
+    --foo 0 (Dict.get network.source network.adj |> Maybe.withDefault Dict.empty |> Dict.toList) 
+    foo 0 (getNeighbors network network.source)
+----------------------------------------------------------------------------------------------------------------
 
+constructPath : Network -> List String -> Path
+constructPath network path =
+-- Construct a List of {u, v, c, f} from a List of vertices
+  let 
+    foo p =
+      case p of
+        n1 :: n2 :: rest ->
+          (n1, n2) :: (foo (n2::rest))
+        _ ->
+          []
+  in
+    List.map (\(n1, n2) -> {u=n1, v=n2, c=getCapacity network n1 n2, f=getFlow network n1 n2}) (foo path)
+
+iterateNbrs : Network -> Set String -> List String -> (Set String, Maybe (List String))
+iterateNbrs resnet visited nbrs =
+-- Do dfs on all neighors of the vertex from the call
+  case nbrs of
+    [] -> (visited, Nothing)
+    next::nbrs_rest ->
+      case dfsHelper resnet next resnet.sink visited of
+        (new_visited, Just path) ->
+          (new_visited, Just (next::path))
+        (new_visited, Nothing) ->
+          iterateNbrs resnet visited nbrs_rest
+
+dfsHelper : Network -> String -> String -> Set String -> (Set String, Maybe (List String))
+dfsHelper resnet cur sink visited =
+  if cur == sink then
+    (Set.insert cur visited, Just [cur])
+  else if String.isEmpty cur then
+    (visited, Nothing)
+  else if Set.member cur visited then
+    (visited, Nothing)
+  else
+    let
+      cur_visited = Set.insert cur visited
+
+      capIsPositive v =
+        (getCapacity resnet cur v) > 0
+
+      notVisited v =
+        not (Set.member v cur_visited)
+
+      cur_nbrs = getNeighbors resnet cur 
+        |> List.filter capIsPositive 
+        |> List.filter notVisited
+    in
+      case iterateNbrs resnet cur_visited cur_nbrs of
+        (new_visited, Just path) ->
+          (new_visited, Just (cur::path))
+        (new_visited, Nothing) ->
+          (new_visited, Nothing)
+
+dfs : Network -> String -> String -> Maybe Path
+dfs resnet source sink =
+  case dfsHelper resnet source sink Set.empty of
+    (_, Just path) ->
+      Just (constructPath resnet path)
+    (_, Nothing) ->
+      Nothing
+ 
 augmenting : Network -> Network -> Maybe (Path, Flow)
 augmenting network resnet =
   let
-    maybe_path = bfs resnet network.source network.sink
+    maybe_path = dfs resnet network.source network.sink
   in
     case maybe_path of
       (Just path) ->
@@ -126,8 +189,10 @@ pushFlow network resnet aug_path aug_flow =
   case aug_path of
     e :: pathrest ->
       let
-        aug_network = updateFlow network e.u e.v (aug_flow + getFlow network e.u e.v)
-        aug_resnet = updateCapacity resnet e.u e.v (-aug_flow + getCapacity resnet e.u e.v)
+        temp_aug_network = updateFlow network e.u e.v (aug_flow + getFlow network e.u e.v)
+        aug_network = updateFlow temp_aug_network e.v e.u (-aug_flow + getFlow network e.v e.u)
+        temp_aug_resnet = updateCapacity resnet e.u e.v (-aug_flow + getCapacity resnet e.u e.v)
+        aug_resnet = updateCapacity temp_aug_resnet e.v e.u (aug_flow + getCapacity resnet e.v e.u)
       in
         pushFlow aug_network aug_resnet pathrest aug_flow
     [] ->
@@ -151,5 +216,3 @@ ford_fulkerson_helper network resnet =
             --ford_fulkerson_helper aug_network aug_resnet
       Nothing ->
         {network=network, resnet=resnet, aug_path=Nothing, flow=calcFlow network}
-
-
