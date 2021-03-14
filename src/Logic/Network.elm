@@ -1,17 +1,10 @@
-module Network exposing(Network, Capacity, Flow, ford_fulkerson_helper)
-import Dict exposing (Dict)
+module Logic.Network exposing(ford_fulkerson_helper)
+
+import Dict
 import Debug
 import Set exposing (Set)
 
-type alias Network =
-  {
-    source : String, 
-    sink : String,
-    adj : Dict String (Dict String (Capacity, Flow))
-  }
-type alias Path = List ({u : String, v : String, c : Capacity, f : Flow})
-type alias Capacity = Int
-type alias Flow = Int 
+import MVC.Types exposing (..)
 
 fromMaybe : Maybe a -> a
 fromMaybe x =
