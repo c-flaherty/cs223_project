@@ -104,12 +104,14 @@ update msg model =
           in 
             ({ 
               model | 
-              graph= Just graph, 
+              graph = Just graph, 
               resNetwork = Just net, 
               computationNetwork = Just net, 
               page = Algo,
               visitingFromConstructor = True
             }, Cmd.none)
+    AlgoToGraphConstructor -> 
+      ({ model | resNetwork = Nothing, computationNetwork = Nothing, graphDraft = resetFlowForDraft model.graphDraft, visitingFromConstructor = False, page = GraphConstructor}, Cmd.none)
     ClickedOnEdge {point1, point2} -> 
       case model.graphDraft of 
         Nothing -> (model, Cmd.none)

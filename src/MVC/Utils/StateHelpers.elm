@@ -129,3 +129,10 @@ graphDraftToNetwork draft =
 networkToGraphDraft : Network -> List AdjacencyList -> List AdjacencyList 
 networkToGraphDraft {source, sink, adj} current_draft = 
   List.map (\col_verts -> Dict.filter (\vert -> \_ -> Dict.member vert col_verts) adj) current_draft
+
+resetFlowForDraft : Maybe ({ currentNum : Int, points : List AdjacencyList }) -> Maybe ({ currentNum : Int, points : List AdjacencyList })
+resetFlowForDraft draft = 
+  case draft of 
+    Nothing -> Nothing 
+    Just {currentNum, points} -> 
+      Just {currentNum = currentNum, points = List.map (Dict.map (\k -> \v -> Dict.map (\k1 -> \(c, f) -> (c, 0)) v)) points}

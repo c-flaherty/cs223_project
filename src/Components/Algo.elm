@@ -109,5 +109,14 @@ algo_view model =
         CDN.stylesheet,
         scene
           |> svg,
-        Button.button [Button.primary, Button.onClick ToHome] [text "Home"]
+        if model.visitingFromConstructor then
+          ButtonGroup.buttonGroup
+            []
+            [
+              ButtonGroup.button [Button.primary, Button.onClick AlgoToGraphConstructor] [text "Return to Constructor"],
+              ButtonGroup.button [Button.primary, Button.onClick ToHome] [text "Home"]
+            ]
+        else 
+          Button.button [Button.primary, Button.onClick ToHome] [text "Home"]
+        
       ]

@@ -53,6 +53,7 @@ type Msg = ToHome
   | ToExample1
   | GraphConstructorToAlgo
   | BuildGraph
+  | AlgoToGraphConstructor
   | ClickedOnEdge {point1 : String, point2 : String}
   | MouseDownOnVertex String 
   | MouseUpOnVertex String
