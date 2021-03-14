@@ -1,4 +1,4 @@
-module Network exposing(..)
+module Network exposing(Network, Capacity, Flow, ford_fulkerson_helper)
 import Dict exposing (Dict)
 import Debug
 import Set exposing (Set)

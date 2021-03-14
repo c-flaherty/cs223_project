@@ -1,9 +1,9 @@
 module ViewHelpers exposing (..)
 
 import Dict exposing (Dict)
-
-type alias Capacity = Int
-type alias Flow = Int 
+import Network exposing (..)
+--type alias Capacity = Int
+--type alias Flow = Int 
 
 getIndex : String -> List (Dict String (Dict String (Capacity, Flow))) -> Int
 getIndex p ls = 

@@ -32,8 +32,11 @@ import ViewHelpers exposing(..)
 import Browser.Events
 import Maybe
 
+import Network exposing (..)
 import Collage.Events
+import Time
 
+{-
 type alias Network =
   {
     source : String, 
@@ -41,6 +44,7 @@ type alias Network =
     adj : Dict String (Dict String (Capacity, Flow)),
     augmenting_path : List String
   }
+-}
 
 type Dir = Forward | Backward | Both
 type alias Point = { name:String, x:Float, y:Float }
@@ -58,8 +62,7 @@ example1 =
       |> Dict.insert "v2" (Dict.fromList [("v4", (6,0))])
       |> Dict.insert "v5" (Dict.fromList [("v2", (3,0)), ("v6", (2,0))])
       |> Dict.insert "v4" (Dict.fromList [("v6", (6,0))])
-      |> Dict.insert "v6" Dict.empty,
-    augmenting_path = []
+      |> Dict.insert "v6" Dict.empty
   }
 
 initGraphDraft :  Maybe { currentNum : Int, points : List (Dict String (Dict String (Capacity, Flow))) }
@@ -75,6 +78,8 @@ initGraphDraft =
 type alias Model = 
   {
     page : Page,
+    computationNetwork : Maybe Network,
+    resNetwork : Maybe Network,
     graph : Maybe ({
       points : List Point,
       edges : List Edge
@@ -133,7 +138,7 @@ networkToModel model g =
             removeMaybe tmp
         )
   in
-    {model | graph = Just {points = Dict.values verts, edges = edges}, page = Algo, graphDraft = Nothing, focusedVertex = Nothing}
+    {model | graph = Just {points = Dict.values verts, edges = edges}, computationNetwork = Just g, page = Algo, graphDraft = Nothing, focusedVertex = Nothing}
 
 graphDraftToGraph : Model -> { points : List Point, edges : List Edge }
 graphDraftToGraph model = 
@@ -303,6 +308,8 @@ insertBetween point1 point2 model =
 initModel : Model 
 initModel = {
     page = Home,
+    computationNetwork = Nothing,
+    resNetwork = Nothing, 
     graph = Nothing,
     graphDraft = Nothing,
     focusedVertex = Nothing,
@@ -333,6 +340,7 @@ type Msg = ToHome
   | ShiftDown 
   | ShiftUp
   | Other
+  | Tick
 
 type Page = Home 
   | Algo 
@@ -353,13 +361,16 @@ subscriptions model =
         (Decode.map
           (\key -> if key == "Shift" then ShiftUp else Other)
           (Decode.field "key" Decode.string)
-        )
+        ),
+      Time.every 2000 (\_ -> Debug.log "Tick:" Tick)
     ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
   case msg of  
-    ToExample1 -> (networkToModel model example1, Cmd.none)
+    ToExample1 -> 
+      let newModel = networkToModel model example1 
+      in ({newModel | resNetwork = newModel.computationNetwork }, Cmd.none)
     BuildGraph -> ({model | graph = Nothing, graphDraft = initGraphDraft, page = GraphConstructor, focusedVertex = Nothing}, Cmd.none)
     ToHome -> ({model | graph = Nothing, graphDraft = Nothing, page = Home, focusedVertex = Nothing}, Cmd.none)
     ClickedOnEdge {point1, point2} -> 
@@ -395,6 +406,18 @@ update msg model =
       ({model | shiftDown = True}, Cmd.none)
     ShiftUp -> 
       ({model | shiftDown = False}, Cmd.none)
+    Tick -> 
+      if model.page == Algo then 
+        case (model.computationNetwork, model.resNetwork) of 
+          (Just cNet, Just rNet) ->
+            let 
+              {network, resnet, aug_path, flow} = Network.ford_fulkerson_helper cNet rNet 
+              newModel = networkToModel model (Debug.log "network:" network)
+            in 
+              ({newModel | resNetwork = Just resnet}, Cmd.none)
+          (_, _) -> (model, Cmd.none)
+      else 
+        (model, Cmd.none)
     Other -> 
       (model, Cmd.none)
 
