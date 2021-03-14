@@ -28,6 +28,7 @@ import Time
 -------------------------------------------------------
 
 import MVC.Types exposing (..)
+import MVC.Utils.StateHelpers exposing (..)
 
 algo_view : Model -> Html Msg 
 algo_view model = 
@@ -64,11 +65,11 @@ algo_view model =
       in
         Collage.group  
           [Collage.segment (e.point1.x, e.point1.y) (e.point2.x, e.point2.y) 
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
           Collage.segment (midpoint.x, midpoint.y) (rotate 10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue)  )),
           Collage.segment (midpoint.x, midpoint.y) (rotate -10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
           Collage.Text.fromString (String.fromInt e.capacity) 
             |> Collage.Text.color (Color.green)
             |> Collage.rendered 
@@ -79,12 +80,21 @@ algo_view model =
             |> Collage.shift (rotate 90 50)
           ]
 
-    points = List.map createCirc (Maybe.withDefault [] (Maybe.andThen (\g -> Just g.points) model.graph))
-    edges = List.map createEdge (Maybe.withDefault [] (Maybe.andThen (\g -> Just g.edges) model.graph))
+    graph = 
+      if model.visitingFromConstructor then 
+        case model.graphDraft of 
+          Nothing -> Debug.todo "Bad input in GraphConstructor"
+          Just {points} -> graphDraftToGraph points 
+      else 
+        case model.graph of 
+          Nothing -> Debug.todo "Bad input in GraphConstructor"
+          Just g -> g
+    pointsViz = List.map createCirc graph.points
+    edgesViz = List.map createEdge graph.edges
 
-    foreground = Collage.group (points ++ edges)
-      |> Collage.shift (-400, -250)
-    background = rectangle 1000 600
+    foreground = Collage.group (pointsViz ++ edgesViz)
+      |> Collage.shift (-500, -250)
+    background = rectangle 1200 600
       |> Collage.outlined Collage.invisible
       
     scene = Collage.Layout.impose foreground background 

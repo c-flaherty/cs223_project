@@ -27,10 +27,10 @@ import Maybe
 import Time
 -------------------------------------------------------
 
-import Utils.ViewHelpers exposing (..)
+import MVC.Utils.StateHelpers exposing (..)
 import MVC.Types exposing (..)
 
-initGraphDraft :  Maybe { currentNum : Int, points : List (Dict String (Dict String (Capacity, Flow))) }
+initGraphDraft :  Maybe { currentNum : Int, points : List AdjacencyList }
 initGraphDraft = 
   Just {
     currentNum = 0,
@@ -39,65 +39,6 @@ initGraphDraft =
         Dict.fromList [("t", Dict.empty)]
       ]
   }
-
-graphDraftToGraph : Model -> { points : List Point, edges : List Edge }
-graphDraftToGraph model = 
-  case model.graphDraft of
-    Nothing -> { points = [], edges = []}
-    Just draft ->
-      let
-        -- Kahn's algorithm, https://en.wikipedia.org/wiki/Topological_sorting
-        topologicalSortCol : Dict String (Dict String (Capacity, Flow)) -> List String
-        topologicalSortCol col = 
-          let
-              startNodes = Set.diff (Set.fromList (Dict.keys col)) (Set.fromList (List.concatMap Dict.keys (Dict.values col)))  
-
-              sorter : List String -> Set String -> List String
-              sorter acc start = 
-                case Set.toList start of 
-                  [] -> List.reverse acc 
-                  x::xs -> 
-                    let 
-                      tailStart = Set.remove x start
-                      nextVerts = Set.intersect (Set.fromList (Dict.keys col)) (Maybe.withDefault Set.empty <| Maybe.andThen (\d -> Just <| Set.fromList <| Dict.keys d) <| Dict.get x col)
-                    in
-                      sorter (x::acc) (Set.union tailStart nextVerts)
-          in
-            sorter [] startNodes
-          
-        columns = List.map topologicalSortCol draft.points
-
-        num_columns = List.length columns 
-
-        genColPos : Float -> List String -> List Point
-        genColPos x col = 
-          case col of 
-            [v] -> [{name = v, x=x, y=toFloat 250}]
-            _ -> List.indexedMap (\y_idx -> \v -> {name = v, x=x, y=toFloat (y_idx*(500//((List.length col) - 1)))}) col
-
-        verts = List.indexedMap (\x_idx -> \col -> genColPos ((toFloat x_idx)*(1000.0/(toFloat (num_columns - 1)))) col) columns
-          |> List.concat
-          |> List.foldr (\p -> \d -> Dict.insert p.name {name=p.name, x=p.x,y=p.y} d) Dict.empty
-
-        edges = 
-          List.map Dict.toList draft.points 
-          |> List.concat 
-          |> List.map (\(k,v) -> (k, Dict.toList v))
-          |> List.map (\(k,v) -> List.map (\(o, (capacity, flow)) -> ((Dict.get k verts), (Dict.get o verts), (capacity, flow, Forward))) v)
-          |> List.concat 
-          |> \tmp ->
-            (
-              let
-                removeMaybe ls = 
-                  case ls of 
-                    [] -> []
-                    (Just t1, Just t2, (capacity, flow, Forward))::lss -> {point1=t1, point2=t2, capacity=capacity, flow=flow, dir=Forward}::(removeMaybe lss)
-                    _::lss -> removeMaybe lss
-              in
-                removeMaybe tmp
-            )
-      in
-        {points = Dict.values verts, edges = edges}
 
 changeColumn : String -> String -> Model -> Model
 changeColumn point1 point2 model = 
@@ -172,7 +113,7 @@ insertBetween point1 point2 model =
       in
       {model | graphDraft = Just {currentNum = currentNum + 1, points = (Debug.log "NewPointsInsertBtwn:" new_points)}, focusedVertex = Nothing}
 
-getIndex : String -> List (Dict String (Dict String (Capacity, Flow))) -> Int
+getIndex : String -> List AdjacencyList -> Int
 getIndex p ls = 
   case ls of 
     [] -> Debug.todo "Bad input in insertBetween"
@@ -182,7 +123,7 @@ getIndex p ls =
       else 
         1 + (getIndex p cols)
 
-addEdge : String -> String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
+addEdge : String -> String -> List AdjacencyList -> List AdjacencyList
 addEdge p1 p2 ls = 
   case ls of 
     [] -> [] 
@@ -192,7 +133,7 @@ addEdge p1 p2 ls =
       else 
         c::(addEdge p1 p2 cols)
 
-removeEdge : String -> String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
+removeEdge : String -> String -> List AdjacencyList -> List AdjacencyList
 removeEdge p1 p2 ls = 
   case ls of 
     [] -> [] 
@@ -203,7 +144,7 @@ removeEdge p1 p2 ls =
         c::(removeEdge p1 p2 cols)
 
 
-insertPoint : Int -> Bool -> String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
+insertPoint : Int -> Bool -> String -> List AdjacencyList -> List AdjacencyList
 insertPoint idx new_col name ls = 
   case (idx, ls, new_col) of 
     (0, [], _) -> Debug.todo "Poorly formed input in insertBetween"
@@ -215,7 +156,7 @@ insertPoint idx new_col name ls =
     (_, c::cols, _) ->
       c::(insertPoint (idx-1) new_col name cols)
 
-insertPointWithData : Int -> Bool -> String -> Dict String (Capacity, Flow) -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow)))
+insertPointWithData : Int -> Bool -> String -> Dict String (Capacity, Flow) -> List AdjacencyList -> List AdjacencyList -> List AdjacencyList
 insertPointWithData idx new_col name data acc ls = 
   case (idx, ls, new_col) of 
     (0, [], _) -> Debug.todo "Poorly formed input in insertBetween"
@@ -227,7 +168,7 @@ insertPointWithData idx new_col name data acc ls =
     (_, c::cols, _) ->
       (insertPointWithData (idx-1) new_col name data (c::acc) cols)
 
-removePoint : String -> List (Dict String (Dict String (Capacity, Flow))) -> List (Dict String (Dict String (Capacity, Flow))) -> (Dict String (Capacity, Flow), List (Dict String (Dict String (Capacity, Flow))))
+removePoint : String -> List AdjacencyList -> List AdjacencyList -> (Dict String (Capacity, Flow), List AdjacencyList)
 removePoint p acc ls = 
   case ls of 
     [] -> (Dict.empty, [])
@@ -240,7 +181,7 @@ removePoint p acc ls =
           else 
             (d, (List.reverse acc) ++ [(Dict.remove p c)] ++ cols)
 
-incrementCapacity : String -> String -> List (Dict String (Dict String (Capacity, Flow))) ->  List (Dict String (Dict String (Capacity, Flow)))
+incrementCapacity : String -> String -> List AdjacencyList ->  List AdjacencyList
 incrementCapacity p1 p2 ls = 
   case ls of 
     [] -> [] 

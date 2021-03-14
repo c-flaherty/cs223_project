@@ -29,13 +29,14 @@ import Time
 
 import MVC.Types exposing (..)
 import Logic.Network exposing (..)
-import Utils.ViewHelpers exposing (..)
+import MVC.Utils.StateHelpers exposing (..)
 import Components.Utils.GraphConstructorHelpers exposing (..)
 import Examples.Example1 exposing (..)
 
 initModel : Model 
 initModel = {
     page = Home,
+    visitingFromConstructor = False,
     computationNetwork = Nothing,
     resNetwork = Nothing, 
     graph = Nothing,
@@ -72,10 +73,43 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
   case msg of  
     ToExample1 -> 
-      let newModel = networkToModel model example1 
-      in ({newModel | resNetwork = newModel.computationNetwork }, Cmd.none)
-    BuildGraph -> ({model | graph = Nothing, graphDraft = initGraphDraft, page = GraphConstructor, focusedVertex = Nothing}, Cmd.none)
-    ToHome -> ({model | graph = Nothing, graphDraft = Nothing, page = Home, focusedVertex = Nothing}, Cmd.none)
+      let graph = networkToGraph example1 
+      in ({
+          model | 
+          graph = Just graph, 
+          resNetwork = Just example1, 
+          computationNetwork = Just example1, 
+          page = Algo 
+        }, Cmd.none)
+    BuildGraph -> ({
+        model | 
+        graphDraft = initGraphDraft, 
+        page = GraphConstructor
+      }, Cmd.none)
+    ToHome -> ({
+        model | 
+        graph = Nothing, 
+        graphDraft = Nothing, 
+        page = Home, 
+        visitingFromConstructor = False, 
+        focusedVertex = Nothing
+      }, Cmd.none)
+    GraphConstructorToAlgo ->
+      case model.graphDraft of 
+        Nothing -> Debug.todo "Bad User Flow in messge 'GraphConstructorToAlgo'"
+        Just {currentNum, points} ->
+          let 
+            net = graphDraftToNetwork points
+            graph = networkToGraph net
+          in 
+            ({ 
+              model | 
+              graph= Just graph, 
+              resNetwork = Just net, 
+              computationNetwork = Just net, 
+              page = Algo,
+              visitingFromConstructor = True
+            }, Cmd.none)
     ClickedOnEdge {point1, point2} -> 
       case model.graphDraft of 
         Nothing -> (model, Cmd.none)
@@ -111,14 +145,24 @@ update msg model =
       ({model | shiftDown = False}, Cmd.none)
     Tick -> 
       if model.page == Algo then 
-        case (model.computationNetwork, model.resNetwork) of 
-          (Just cNet, Just rNet) ->
-            let 
-              {network, resnet, aug_path, flow} = Logic.Network.ford_fulkerson_helper cNet rNet 
-              newModel = networkToModel model (Debug.log "network:" network)
-            in 
-              ({newModel | resNetwork = Just resnet}, Cmd.none)
-          (_, _) -> (model, Cmd.none)
+        if model.visitingFromConstructor == True then 
+          case (model.computationNetwork, model.resNetwork, model.graphDraft) of 
+            (Just cNet, Just rNet, Just {currentNum, points}) -> 
+              let 
+                {network, resnet, aug_path, flow} = Logic.Network.ford_fulkerson_helper cNet rNet 
+                newGraphDraft = networkToGraphDraft network points
+              in 
+                ({model | graphDraft = Just {currentNum = currentNum, points = newGraphDraft}, computationNetwork = Just network, resNetwork = Just resnet}, Cmd.none)
+            (_, _, _) -> (model, Cmd.none)
+        else 
+          case (model.computationNetwork, model.resNetwork) of 
+            (Just cNet, Just rNet) ->
+              let 
+                {network, resnet, aug_path, flow} = Logic.Network.ford_fulkerson_helper cNet rNet 
+                graph = networkToGraph network
+              in 
+                ({model | graph = Just graph, computationNetwork = Just network, resNetwork = Just resnet}, Cmd.none)
+            (_, _) -> (model, Cmd.none)
       else 
         (model, Cmd.none)
     Other -> 

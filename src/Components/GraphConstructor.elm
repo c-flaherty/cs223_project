@@ -27,14 +27,18 @@ import Maybe
 import Time
 -------------------------------------------------------
 
-import Utils.ViewHelpers exposing (..)
+import MVC.Utils.StateHelpers exposing (..)
 import MVC.Types exposing (..)
 import Components.Utils.GraphConstructorHelpers exposing (..)
+import MVC.Utils.StateHelpers exposing (..)
 
 graph_constructor_view : Model -> Html Msg 
 graph_constructor_view model = 
   let
-    graph = graphDraftToGraph model 
+    graph = 
+      case model.graphDraft of 
+        Nothing -> Debug.todo "Bad input in GraphConstructor"
+        Just {points} -> graphDraftToGraph points 
 
     createCirc : Point -> Collage.Collage Msg
     createCirc p = 
@@ -86,10 +90,10 @@ graph_constructor_view model =
           ]
         |> Collage.Events.onClick (ClickedOnEdge {point1 = e.point1.name, point2 = e.point2.name}) 
 
-    points = List.map createCirc graph.points
-    edges = List.map createEdge graph.edges
+    pointsViz = List.map createCirc graph.points
+    edgesViz = List.map createEdge graph.edges
 
-    foreground = Collage.group (points ++ edges)
+    foreground = Collage.group (pointsViz ++ edgesViz)
       |> Collage.shift (-500, -250)
     background = rectangle 1200 600
       |> Collage.outlined Collage.invisible
@@ -108,5 +112,10 @@ graph_constructor_view model =
           CDN.stylesheet,
           scene
             |> svg,
-          Button.button [Button.primary, Button.onClick ToHome] [text "Home"]
+          ButtonGroup.buttonGroup
+          []
+          [
+            ButtonGroup.button [Button.primary, Button.onClick GraphConstructorToAlgo] [text "Compute Max Flow"],
+            ButtonGroup.button [Button.primary, Button.onClick ToHome] [text "Home"]
+          ]
         ]
