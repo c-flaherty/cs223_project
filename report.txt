@@ -1,0 +1,6 @@
+Colin and I worked on a project that aimed to visualize the Ford Fulkerson max flow algorithm. In the process we thought
+deeply about appropriate data structures for graphs and networks, implementing the algorithm itself, and about how to
+make the visualization user friendly, instructive, and intuitive. 
+
+For the network we decided on a Dict of Dict's for the adjacency matrix, and a source String and sink String, all packaged within a record. For this we made extensive use of the Dict library in Elm.
+
