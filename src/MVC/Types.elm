@@ -1,6 +1,8 @@
 module MVC.Types exposing (Flow, Network, Model, Capacity, Point, Dir(..), Edge, Msg(..), Page(..), Path, Flags, AdjacencyList, NetworkForViz)
 
 import Dict exposing (Dict)
+import File
+import String
 
 {-
 This file contains all types used in this project.
@@ -65,6 +67,10 @@ type Msg = ToHome
   | ShiftUp
   | Other
   | Tick
+  | Download
+  | Upload
+  | SelectedFile File.File
+  | LoadedFile String
 
 type Page = Home 
   | Algo 

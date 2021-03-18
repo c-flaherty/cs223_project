@@ -131,8 +131,10 @@ addEdge : String -> String -> List AdjacencyList -> List AdjacencyList
 addEdge p1 p2 ls = 
   case ls of 
     [] -> [] 
-    c::cols -> 
-      if List.member p1 (Dict.keys c) then 
+    c::cols ->
+      if Maybe.andThen (Just << Dict.member p1) (Dict.get p2 c) == Just True then 
+        c::cols 
+      else if List.member p1 (Dict.keys c) then 
         (Dict.update p1 (Maybe.andThen (\d -> Just <| Dict.insert p2 (0,0) d)) c)::cols
       else 
         c::(addEdge p1 p2 cols)

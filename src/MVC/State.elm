@@ -29,12 +29,18 @@ import Json.Decode as Decode
 import Browser.Events
 import Maybe
 import Time
+import File.Download as Download
+import File.Select as Select
+import File
+import Task
+
 -------------------------------------------------------
 
 import MVC.Types exposing (..)
 import Logic.Network exposing (..)
 import MVC.Utils.StateHelpers exposing (..)
 import Components.Utils.GraphConstructorHelpers exposing (..)
+import Components.Utils.GraphEncoder exposing (..)
 import Examples.Example1 exposing (..)
 
 initModel : Model 
@@ -171,5 +177,19 @@ update msg model =
             (_, _) -> (model, Cmd.none)
       else 
         (model, Cmd.none)
-    Other -> 
+    Download -> 
+      case model.graphDraft of 
+        Nothing -> (model, Cmd.none)
+        Just draft -> (model, Download.string "graph" "text/plain" (toJSON draft))
+    Upload -> 
+      (model, Select.file ["text/plain"] SelectedFile)
+    SelectedFile f -> 
+      (model, Task.perform LoadedFile (File.toString f))
+    LoadedFile str -> 
+      let 
+        newDraft = fromJSON str
+      in 
+        ({model | graphDraft = Just newDraft}, Cmd.none)
+    _ -> 
       (model, Cmd.none)
+      

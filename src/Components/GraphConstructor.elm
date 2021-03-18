@@ -37,8 +37,9 @@ import Time
 
 import MVC.Utils.StateHelpers exposing (..)
 import MVC.Types exposing (..)
-import Components.Utils.GraphConstructorHelpers exposing (..)
 import MVC.Utils.StateHelpers exposing (..)
+import Components.Utils.GraphConstructorHelpers exposing (..)
+
 
 graph_constructor_view : Model -> Html Msg 
 graph_constructor_view model = 
@@ -124,12 +125,14 @@ graph_constructor_view model =
           []
           [
             ButtonGroup.button [Button.primary, Button.onClick GraphConstructorToAlgo] [text "Compute Max Flow"],
+            ButtonGroup.button [Button.primary, Button.onClick Download] [text "Download"],
+            ButtonGroup.button [Button.primary, Button.onClick Upload] [text "Upload"],
             ButtonGroup.button [Button.primary, Button.onClick ToHome] [text "Home"]
           ],
           div [Spacing.pt4, Spacing.pb4] [instructions]
         ]
 
-
+instructions : Html Msg 
 instructions =
   ListGroup.custom
     [ ListGroup.anchor

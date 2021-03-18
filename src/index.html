@@ -4415,6 +4415,184 @@ function _Time_getZoneName()
 		callback(_Scheduler_succeed(name));
 	});
 }
+
+
+
+// DECODER
+
+var _File_decoder = _Json_decodePrim(function(value) {
+	// NOTE: checks if `File` exists in case this is run on node
+	return (typeof File !== 'undefined' && value instanceof File)
+		? $elm$core$Result$Ok(value)
+		: _Json_expecting('a FILE', value);
+});
+
+
+// METADATA
+
+function _File_name(file) { return file.name; }
+function _File_mime(file) { return file.type; }
+function _File_size(file) { return file.size; }
+
+function _File_lastModified(file)
+{
+	return $elm$time$Time$millisToPosix(file.lastModified);
+}
+
+
+// DOWNLOAD
+
+var _File_downloadNode;
+
+function _File_getDownloadNode()
+{
+	return _File_downloadNode || (_File_downloadNode = document.createElement('a'));
+}
+
+var _File_download = F3(function(name, mime, content)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var blob = new Blob([content], {type: mime});
+
+		// for IE10+
+		if (navigator.msSaveOrOpenBlob)
+		{
+			navigator.msSaveOrOpenBlob(blob, name);
+			return;
+		}
+
+		// for HTML5
+		var node = _File_getDownloadNode();
+		var objectUrl = URL.createObjectURL(blob);
+		node.href = objectUrl;
+		node.download = name;
+		_File_click(node);
+		URL.revokeObjectURL(objectUrl);
+	});
+});
+
+function _File_downloadUrl(href)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var node = _File_getDownloadNode();
+		node.href = href;
+		node.download = '';
+		node.origin === location.origin || (node.target = '_blank');
+		_File_click(node);
+	});
+}
+
+
+// IE COMPATIBILITY
+
+function _File_makeBytesSafeForInternetExplorer(bytes)
+{
+	// only needed by IE10 and IE11 to fix https://github.com/elm/file/issues/10
+	// all other browsers can just run `new Blob([bytes])` directly with no problem
+	//
+	return new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+}
+
+function _File_click(node)
+{
+	// only needed by IE10 and IE11 to fix https://github.com/elm/file/issues/11
+	// all other browsers have MouseEvent and do not need this conditional stuff
+	//
+	if (typeof MouseEvent === 'function')
+	{
+		node.dispatchEvent(new MouseEvent('click'));
+	}
+	else
+	{
+		var event = document.createEvent('MouseEvents');
+		event.initMouseEvent('click', true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		document.body.appendChild(node);
+		node.dispatchEvent(event);
+		document.body.removeChild(node);
+	}
+}
+
+
+// UPLOAD
+
+var _File_node;
+
+function _File_uploadOne(mimes)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		_File_node = document.createElement('input');
+		_File_node.type = 'file';
+		_File_node.accept = A2($elm$core$String$join, ',', mimes);
+		_File_node.addEventListener('change', function(event)
+		{
+			callback(_Scheduler_succeed(event.target.files[0]));
+		});
+		_File_click(_File_node);
+	});
+}
+
+function _File_uploadOneOrMore(mimes)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		_File_node = document.createElement('input');
+		_File_node.type = 'file';
+		_File_node.multiple = true;
+		_File_node.accept = A2($elm$core$String$join, ',', mimes);
+		_File_node.addEventListener('change', function(event)
+		{
+			var elmFiles = _List_fromArray(event.target.files);
+			callback(_Scheduler_succeed(_Utils_Tuple2(elmFiles.a, elmFiles.b)));
+		});
+		_File_click(_File_node);
+	});
+}
+
+
+// CONTENT
+
+function _File_toString(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(reader.result));
+		});
+		reader.readAsText(blob);
+		return function() { reader.abort(); };
+	});
+}
+
+function _File_toBytes(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(new DataView(reader.result)));
+		});
+		reader.readAsArrayBuffer(blob);
+		return function() { reader.abort(); };
+	});
+}
+
+function _File_toUrl(blob)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		var reader = new FileReader();
+		reader.addEventListener('loadend', function() {
+			callback(_Scheduler_succeed(reader.result));
+		});
+		reader.readAsDataURL(blob);
+		return function() { reader.abort(); };
+	});
+}
+
 var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
@@ -5869,6 +6047,12 @@ var $author$project$MVC$State$subscriptions = function (model) {
 };
 var $author$project$MVC$Types$Algo = {$: 'Algo'};
 var $author$project$MVC$Types$GraphConstructor = {$: 'GraphConstructor'};
+var $author$project$MVC$Types$LoadedFile = function (a) {
+	return {$: 'LoadedFile', a: a};
+};
+var $author$project$MVC$Types$SelectedFile = function (a) {
+	return {$: 'SelectedFile', a: a};
+};
 var $elm$core$Basics$negate = function (n) {
 	return -n;
 };
@@ -5882,6 +6066,15 @@ var $elm$core$Maybe$andThen = F2(
 			return callback(value);
 		} else {
 			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$Dict$member = F2(
+	function (key, dict) {
+		var _v0 = A2($elm$core$Dict$get, key, dict);
+		if (_v0.$ === 'Just') {
+			return true;
+		} else {
+			return false;
 		}
 	});
 var $elm$core$List$any = F2(
@@ -6294,7 +6487,15 @@ var $author$project$Components$Utils$GraphConstructorHelpers$addEdge = F3(
 		} else {
 			var c = ls.a;
 			var cols = ls.b;
-			return A2(
+			return _Utils_eq(
+				A2(
+					$elm$core$Maybe$andThen,
+					A2(
+						$elm$core$Basics$composeL,
+						$elm$core$Maybe$Just,
+						$elm$core$Dict$member(p1)),
+					A2($elm$core$Dict$get, p2, c)),
+				$elm$core$Maybe$Just(true)) ? A2($elm$core$List$cons, c, cols) : (A2(
 				$elm$core$List$member,
 				p1,
 				$elm$core$Dict$keys(c)) ? A2(
@@ -6315,7 +6516,7 @@ var $author$project$Components$Utils$GraphConstructorHelpers$addEdge = F3(
 				cols) : A2(
 				$elm$core$List$cons,
 				c,
-				A3($author$project$Components$Utils$GraphConstructorHelpers$addEdge, p1, p2, cols));
+				A3($author$project$Components$Utils$GraphConstructorHelpers$addEdge, p1, p2, cols)));
 		}
 	});
 var $elm$core$Debug$todo = _Debug_todo;
@@ -6325,8 +6526,8 @@ var $author$project$Components$Utils$GraphConstructorHelpers$getIndex = F2(
 			return _Debug_todo(
 				'Components.Utils.GraphConstructorHelpers',
 				{
-					start: {line: 119, column: 11},
-					end: {line: 119, column: 21}
+					start: {line: 123, column: 11},
+					end: {line: 123, column: 21}
 				})('Bad input in insertBetween');
 		} else {
 			var c = ls.a;
@@ -6380,15 +6581,15 @@ var $author$project$Components$Utils$GraphConstructorHelpers$insertPointWithData
 					return _Debug_todo(
 						'Components.Utils.GraphConstructorHelpers',
 						{
-							start: {line: 162, column: 19},
-							end: {line: 162, column: 29}
+							start: {line: 168, column: 19},
+							end: {line: 168, column: 29}
 						})('Poorly formed input in insertBetween');
 				} else {
 					return _Debug_todo(
 						'Components.Utils.GraphConstructorHelpers',
 						{
-							start: {line: 163, column: 19},
-							end: {line: 163, column: 29}
+							start: {line: 169, column: 19},
+							end: {line: 169, column: 29}
 						})('Poorly formed input in insertBetween');
 				}
 			} else {
@@ -6593,6 +6794,13 @@ var $author$project$Examples$Example1$example1 = {
 	sink: 'v6',
 	source: 'v1'
 };
+var $elm$file$File$Select$file = F2(
+	function (mimes, toMsg) {
+		return A2(
+			$elm$core$Task$perform,
+			toMsg,
+			_File_uploadOne(mimes));
+	});
 var $elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6689,15 +6897,6 @@ var $elm$core$Set$insert = F2(
 		var dict = _v0.a;
 		return $elm$core$Set$Set_elm_builtin(
 			A3($elm$core$Dict$insert, key, _Utils_Tuple0, dict));
-	});
-var $elm$core$Dict$member = F2(
-	function (key, dict) {
-		var _v0 = A2($elm$core$Dict$get, key, dict);
-		if (_v0.$ === 'Just') {
-			return true;
-		} else {
-			return false;
-		}
 	});
 var $elm$core$Set$member = F2(
 	function (key, _v0) {
@@ -6802,8 +7001,8 @@ var $author$project$Logic$Network$fromMaybe = function (x) {
 		return _Debug_todo(
 			'Logic.Network',
 			{
-				start: {line: 13, column: 16},
-				end: {line: 13, column: 26}
+				start: {line: 17, column: 16},
+				end: {line: 17, column: 26}
 			})('fromJust Nothing');
 	}
 };
@@ -7002,6 +7201,77 @@ var $author$project$Logic$Network$ford_fulkerson_helper = F2(
 			};
 		}
 	});
+var $elm$json$Json$Decode$decodeString = _Json_runOnString;
+var $elm$json$Json$Decode$keyValuePairs = _Json_decodeKeyValuePairs;
+var $elm$json$Json$Decode$dict = function (decoder) {
+	return A2(
+		$elm$json$Json$Decode$map,
+		$elm$core$Dict$fromList,
+		$elm$json$Json$Decode$keyValuePairs(decoder));
+};
+var $elm$json$Json$Decode$int = _Json_decodeInt;
+var $elm$json$Json$Decode$list = _Json_decodeList;
+var $author$project$Components$Utils$GraphEncoder$dr = A3(
+	$elm$json$Json$Decode$map2,
+	function (currentNum) {
+		return function (points) {
+			return {currentNum: currentNum, points: points};
+		};
+	},
+	A2($elm$json$Json$Decode$field, 'currentNum', $elm$json$Json$Decode$int),
+	A2(
+		$elm$json$Json$Decode$field,
+		'points',
+		$elm$json$Json$Decode$list(
+			$elm$json$Json$Decode$dict(
+				$elm$json$Json$Decode$dict(
+					A2(
+						$elm$json$Json$Decode$map,
+						function (s) {
+							var _v0 = A2($elm$core$String$split, ',', s);
+							if ((_v0.b && _v0.b.b) && (!_v0.b.b.b)) {
+								var c = _v0.a;
+								var _v1 = _v0.b;
+								var f = _v1.a;
+								var _v2 = _Utils_Tuple2(
+									$elm$core$String$toInt(c),
+									$elm$core$String$toInt(f));
+								if ((_v2.a.$ === 'Just') && (_v2.b.$ === 'Just')) {
+									var cInt = _v2.a.a;
+									var fInt = _v2.b.a;
+									return _Utils_Tuple2(cInt, fInt);
+								} else {
+									return _Debug_todo(
+										'Components.Utils.GraphEncoder',
+										{
+											start: {line: 46, column: 41},
+											end: {line: 46, column: 51}
+										})('Can\'t happen');
+								}
+							} else {
+								return _Debug_todo(
+									'Components.Utils.GraphEncoder',
+									{
+										start: {line: 47, column: 20},
+										end: {line: 47, column: 30}
+									})('Can\'t happen');
+							}
+						},
+						$elm$json$Json$Decode$string))))));
+var $author$project$Components$Utils$GraphEncoder$fromJSON = function (jsonStr) {
+	var _v0 = A2($elm$json$Json$Decode$decodeString, $author$project$Components$Utils$GraphEncoder$dr, jsonStr);
+	if (_v0.$ === 'Ok') {
+		var v = _v0.a;
+		return v;
+	} else {
+		return _Debug_todo(
+			'Components.Utils.GraphEncoder',
+			{
+				start: {line: 30, column: 13},
+				end: {line: 30, column: 23}
+			})('hi');
+	}
+};
 var $author$project$MVC$Utils$StateHelpers$graphDraftToNetwork = function (draft) {
 	return {
 		adj: A3($elm$core$List$foldr, $elm$core$Dict$union, $elm$core$Dict$empty, draft),
@@ -7101,15 +7371,15 @@ var $author$project$Components$Utils$GraphConstructorHelpers$insertPoint = F4(
 				return _Debug_todo(
 					'Components.Utils.GraphConstructorHelpers',
 					{
-						start: {line: 150, column: 19},
-						end: {line: 150, column: 29}
+						start: {line: 156, column: 19},
+						end: {line: 156, column: 29}
 					})('Poorly formed input in insertBetween');
 			} else {
 				return _Debug_todo(
 					'Components.Utils.GraphConstructorHelpers',
 					{
-						start: {line: 151, column: 19},
-						end: {line: 151, column: 29}
+						start: {line: 157, column: 19},
+						end: {line: 157, column: 29}
 					})('Poorly formed input in insertBetween');
 			}
 		} else {
@@ -7677,6 +7947,105 @@ var $author$project$MVC$Utils$StateHelpers$resetFlowForDraft = function (draft) 
 			});
 	}
 };
+var $elm$file$File$Download$string = F3(
+	function (name, mime, content) {
+		return A2(
+			$elm$core$Task$perform,
+			$elm$core$Basics$never,
+			A3(_File_download, name, mime, content));
+	});
+var $elm$json$Json$Encode$dict = F3(
+	function (toKey, toValue, dictionary) {
+		return _Json_wrap(
+			A3(
+				$elm$core$Dict$foldl,
+				F3(
+					function (key, value, obj) {
+						return A3(
+							_Json_addField,
+							toKey(key),
+							toValue(value),
+							obj);
+					}),
+				_Json_emptyObject(_Utils_Tuple0),
+				dictionary));
+	});
+var $elm$json$Json$Encode$int = _Json_wrap;
+var $elm$json$Json$Encode$list = F2(
+	function (func, entries) {
+		return _Json_wrap(
+			A3(
+				$elm$core$List$foldl,
+				_Json_addEntry(func),
+				_Json_emptyArray(_Utils_Tuple0),
+				entries));
+	});
+var $elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			$elm$core$List$foldl,
+			F2(
+				function (_v0, obj) {
+					var k = _v0.a;
+					var v = _v0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var $elm$json$Json$Encode$string = _Json_wrap;
+var $author$project$Components$Utils$GraphEncoder$toJSON = function (_v0) {
+	var currentNum = _v0.currentNum;
+	var points = _v0.points;
+	return A2(
+		$elm$json$Json$Encode$encode,
+		0,
+		$elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'currentNum',
+					$elm$json$Json$Encode$int(currentNum)),
+					_Utils_Tuple2(
+					'points',
+					A2(
+						$elm$json$Json$Encode$list,
+						function (v) {
+							return v;
+						},
+						A2(
+							$elm$core$List$map,
+							A2(
+								$elm$json$Json$Encode$dict,
+								function (s) {
+									return s;
+								},
+								function (v) {
+									return v;
+								}),
+							A2(
+								$elm$core$List$map,
+								$elm$core$Dict$map(
+									function (v) {
+										return function (d) {
+											return A3(
+												$elm$json$Json$Encode$dict,
+												function (s) {
+													return s;
+												},
+												function (_v1) {
+													var c = _v1.a;
+													var f = _v1.b;
+													return $elm$json$Json$Encode$string(
+														$elm$core$String$fromInt(c) + (',' + $elm$core$String$fromInt(f)));
+												},
+												d);
+										};
+									}),
+								points))))
+				])));
+};
+var $elm$file$File$toString = _File_toString;
 var $author$project$MVC$State$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -7710,8 +8079,8 @@ var $author$project$MVC$State$update = F2(
 					return _Debug_todo(
 						'MVC.State',
 						{
-							start: {line: 99, column: 20},
-							end: {line: 99, column: 30}
+							start: {line: 109, column: 20},
+							end: {line: 109, column: 30}
 						})('Bad User Flow in messge \'GraphConstructorToAlgo\'');
 				} else {
 					var currentNum = _v1.a.currentNum;
@@ -7851,6 +8220,46 @@ var $author$project$MVC$State$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'Download':
+				var _v8 = model.graphDraft;
+				if (_v8.$ === 'Nothing') {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				} else {
+					var draft = _v8.a;
+					return _Utils_Tuple2(
+						model,
+						A3(
+							$elm$file$File$Download$string,
+							'graph',
+							'text/plain',
+							$author$project$Components$Utils$GraphEncoder$toJSON(draft)));
+				}
+			case 'Upload':
+				return _Utils_Tuple2(
+					model,
+					A2(
+						$elm$file$File$Select$file,
+						_List_fromArray(
+							['text/plain']),
+						$author$project$MVC$Types$SelectedFile));
+			case 'SelectedFile':
+				var f = msg.a;
+				return _Utils_Tuple2(
+					model,
+					A2(
+						$elm$core$Task$perform,
+						$author$project$MVC$Types$LoadedFile,
+						$elm$file$File$toString(f)));
+			case 'LoadedFile':
+				var str = msg.a;
+				var newDraft = $author$project$Components$Utils$GraphEncoder$fromJSON(str);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							graphDraft: $elm$core$Maybe$Just(newDraft)
+						}),
+					$elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
@@ -7898,7 +8307,6 @@ var $rundis$elm_bootstrap$Bootstrap$Internal$Button$applyModifier = F2(
 					});
 		}
 	});
-var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -9234,12 +9642,12 @@ var $timjs$elm_collage$Collage$Render$svg = function (collage) {
 		A2($timjs$elm_collage$Collage$Layout$align, $timjs$elm_collage$Collage$Layout$topLeft, collage));
 };
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $timjs$elm_collage$Collage$thick = 4.0;
 var $timjs$elm_collage$Collage$traced = F2(
 	function (linestyle, p) {
 		return $timjs$elm_collage$Collage$Core$collage(
 			A2($timjs$elm_collage$Collage$Core$Path, linestyle, p));
 	});
+var $timjs$elm_collage$Collage$ultrathick = 8.0;
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
 var $author$project$Components$Algo$algo_view = function (model) {
 	var graph = function () {
@@ -9249,8 +9657,8 @@ var $author$project$Components$Algo$algo_view = function (model) {
 				return _Debug_todo(
 					'Components.Algo',
 					{
-						start: {line: 86, column: 22},
-						end: {line: 86, column: 32}
+						start: {line: 90, column: 22},
+						end: {line: 90, column: 32}
 					})('Bad input in GraphConstructor');
 			} else {
 				var points = _v0.a.points;
@@ -9262,8 +9670,8 @@ var $author$project$Components$Algo$algo_view = function (model) {
 				return _Debug_todo(
 					'Components.Algo',
 					{
-						start: {line: 90, column: 22},
-						end: {line: 90, column: 32}
+						start: {line: 94, column: 22},
+						end: {line: 94, column: 32}
 					})('Bad input in GraphConstructor');
 			} else {
 				var g = _v1.a;
@@ -9293,7 +9701,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					$timjs$elm_collage$Collage$traced,
 					A2(
 						$timjs$elm_collage$Collage$solid,
-						$timjs$elm_collage$Collage$thick,
+						$timjs$elm_collage$Collage$ultrathick,
 						$timjs$elm_collage$Collage$uniform(
 							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
@@ -9304,7 +9712,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					$timjs$elm_collage$Collage$traced,
 					A2(
 						$timjs$elm_collage$Collage$solid,
-						$timjs$elm_collage$Collage$thick,
+						$timjs$elm_collage$Collage$ultrathick,
 						$timjs$elm_collage$Collage$uniform(
 							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
@@ -9315,7 +9723,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					$timjs$elm_collage$Collage$traced,
 					A2(
 						$timjs$elm_collage$Collage$solid,
-						$timjs$elm_collage$Collage$thick,
+						$timjs$elm_collage$Collage$ultrathick,
 						$timjs$elm_collage$Collage$uniform(
 							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
@@ -9356,7 +9764,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 							$timjs$elm_collage$Collage$outlined,
 							A2(
 								$timjs$elm_collage$Collage$solid,
-								$timjs$elm_collage$Collage$thick,
+								$timjs$elm_collage$Collage$ultrathick,
 								$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
 							$timjs$elm_collage$Collage$circle(25))),
 						A2(
@@ -9439,6 +9847,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 var $author$project$MVC$Types$ClickedOnEdge = function (a) {
 	return {$: 'ClickedOnEdge', a: a};
 };
+var $author$project$MVC$Types$Download = {$: 'Download'};
 var $author$project$MVC$Types$GraphConstructorToAlgo = {$: 'GraphConstructorToAlgo'};
 var $author$project$MVC$Types$MouseDownOnVertex = function (a) {
 	return {$: 'MouseDownOnVertex', a: a};
@@ -9446,6 +9855,327 @@ var $author$project$MVC$Types$MouseDownOnVertex = function (a) {
 var $author$project$MVC$Types$MouseUpOnVertex = function (a) {
 	return {$: 'MouseUpOnVertex', a: a};
 };
+var $author$project$MVC$Types$Upload = {$: 'Upload'};
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$alignItemsStart = $elm$html$Html$Attributes$class('align-items-start');
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Action = {$: 'Action'};
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Attrs = function (a) {
+	return {$: 'Attrs', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$CustomItem = function (a) {
+	return {$: 'CustomItem', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Disabled = {$: 'Disabled'};
+var $elm$html$Html$a = _VirtualDom_node('a');
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$preventClick = A2($elm$html$Html$Attributes$attribute, 'onclick', 'var event = arguments[0] || window.event; event.preventDefault();');
+var $rundis$elm_bootstrap$Bootstrap$ListGroup$anchor = F2(
+	function (options, children) {
+		var updOptions = A2(
+			$elm$core$List$any,
+			$elm$core$Basics$eq($rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Disabled),
+			options) ? _Utils_ap(
+			options,
+			_List_fromArray(
+				[
+					$rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Attrs(
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$preventClick]))
+				])) : options;
+		return $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$CustomItem(
+			{
+				children: children,
+				itemFn: $elm$html$Html$a,
+				options: A2($elm$core$List$cons, $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Action, updOptions)
+			});
+	});
+var $rundis$elm_bootstrap$Bootstrap$ListGroup$attrs = function (attrs_) {
+	return $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Attrs(attrs_);
+};
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$block = $elm$html$Html$Attributes$class('d-flex');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$col = $elm$html$Html$Attributes$class('flex-column');
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$applyModifier = F2(
+	function (modifier, options) {
+		switch (modifier.$) {
+			case 'Roled':
+				var role = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						role: $elm$core$Maybe$Just(role)
+					});
+			case 'Action':
+				return _Utils_update(
+					options,
+					{action: true});
+			case 'Disabled':
+				return _Utils_update(
+					options,
+					{disabled: true});
+			case 'Active':
+				return _Utils_update(
+					options,
+					{active: true});
+			default:
+				var attrs = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						attributes: _Utils_ap(options.attributes, attrs)
+					});
+		}
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$defaultOptions = {action: false, active: false, attributes: _List_Nil, disabled: false, role: $elm$core$Maybe$Nothing};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$Role$toClass = F2(
+	function (prefix, role) {
+		return $elm$html$Html$Attributes$class(
+			prefix + ('-' + function () {
+				switch (role.$) {
+					case 'Primary':
+						return 'primary';
+					case 'Secondary':
+						return 'secondary';
+					case 'Success':
+						return 'success';
+					case 'Info':
+						return 'info';
+					case 'Warning':
+						return 'warning';
+					case 'Danger':
+						return 'danger';
+					case 'Light':
+						return 'light';
+					default:
+						return 'dark';
+				}
+			}()));
+	});
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$itemAttributes = function (options) {
+	return _Utils_ap(
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$classList(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('list-group-item', true),
+						_Utils_Tuple2('disabled', options.disabled),
+						_Utils_Tuple2('active', options.active),
+						_Utils_Tuple2('list-group-item-action', options.action)
+					]))
+			]),
+		_Utils_ap(
+			_List_fromArray(
+				[
+					$elm$html$Html$Attributes$disabled(options.disabled)
+				]),
+			_Utils_ap(
+				A2(
+					$elm$core$Maybe$withDefault,
+					_List_Nil,
+					A2(
+						$elm$core$Maybe$map,
+						function (r) {
+							return _List_fromArray(
+								[
+									A2($rundis$elm_bootstrap$Bootstrap$Internal$Role$toClass, 'list-group-item', r)
+								]);
+						},
+						options.role)),
+				options.attributes)));
+};
+var $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$renderCustomItem = function (_v0) {
+	var itemFn = _v0.a.itemFn;
+	var options = _v0.a.options;
+	var children = _v0.a.children;
+	return A2(
+		itemFn,
+		$rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$itemAttributes(
+			A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$applyModifier, $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$defaultOptions, options)),
+		children);
+};
+var $rundis$elm_bootstrap$Bootstrap$ListGroup$custom = function (items) {
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('list-group')
+			]),
+		A2($elm$core$List$map, $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$renderCustomItem, items));
+};
+var $rundis$elm_bootstrap$Bootstrap$ListGroup$disabled = $rundis$elm_bootstrap$Bootstrap$Internal$ListGroup$Disabled;
+var $elm$html$Html$h5 = _VirtualDom_node('h5');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$justifyBetween = $elm$html$Html$Attributes$class('justify-content-between');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1 = $elm$html$Html$Attributes$class('mb-1');
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Size$w100 = $elm$html$Html$Attributes$class('w-100');
+var $author$project$Components$GraphConstructor$instructions = $rundis$elm_bootstrap$Bootstrap$ListGroup$custom(
+	_List_fromArray(
+		[
+			A2(
+			$rundis$elm_bootstrap$Bootstrap$ListGroup$anchor,
+			_List_fromArray(
+				[
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$disabled,
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$attrs(
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$href('#'),
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$col,
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$alignItemsStart
+						]))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$block, $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$justifyBetween, $rundis$elm_bootstrap$Bootstrap$Utilities$Size$w100]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$h5,
+							_List_fromArray(
+								[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Add vertex along edge')
+								]))
+						])),
+					A2(
+					$elm$html$Html$p,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Clicking on edge will add another vertex along that edge.')
+						]))
+				])),
+			A2(
+			$rundis$elm_bootstrap$Bootstrap$ListGroup$anchor,
+			_List_fromArray(
+				[
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$disabled,
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$attrs(
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$href('#'),
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$col,
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$alignItemsStart
+						]))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$block, $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$justifyBetween, $rundis$elm_bootstrap$Bootstrap$Utilities$Size$w100]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$h5,
+							_List_fromArray(
+								[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Move vertex to new column')
+								]))
+						])),
+					A2(
+					$elm$html$Html$p,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Holding shift and clicking on an edge will increment the capacity along that edge in the direction of the arrow by 1.')
+						]))
+				])),
+			A2(
+			$rundis$elm_bootstrap$Bootstrap$ListGroup$anchor,
+			_List_fromArray(
+				[
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$disabled,
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$attrs(
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$href('#'),
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$col,
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$alignItemsStart
+						]))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$block, $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$justifyBetween, $rundis$elm_bootstrap$Bootstrap$Utilities$Size$w100]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$h5,
+							_List_fromArray(
+								[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Add edge between vertices at most one column apart')
+								]))
+						])),
+					A2(
+					$elm$html$Html$p,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Dragging from vertex A to vertex B will move vertex A into the column of vertex B.')
+						]))
+				])),
+			A2(
+			$rundis$elm_bootstrap$Bootstrap$ListGroup$anchor,
+			_List_fromArray(
+				[
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$disabled,
+					$rundis$elm_bootstrap$Bootstrap$ListGroup$attrs(
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$href('#'),
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$col,
+							$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$alignItemsStart
+						]))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Flex$block, $rundis$elm_bootstrap$Bootstrap$Utilities$Flex$justifyBetween, $rundis$elm_bootstrap$Bootstrap$Utilities$Size$w100]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$h5,
+							_List_fromArray(
+								[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Increment capacity along edge')
+								]))
+						])),
+					A2(
+					$elm$html$Html$p,
+					_List_fromArray(
+						[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$mb1]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('Holding shift and dragging from vertex A to vertex B will add an edge from vertex A to vertex B, provided theses vertices are at most one column apart.')
+						]))
+				]))
+		]));
 var $timjs$elm_collage$Collage$Events$on = F3(
 	function (event, decoder, collage) {
 		return _Utils_update(
@@ -9484,6 +10214,8 @@ var $timjs$elm_collage$Collage$Events$mouseOn = F2(
 	});
 var $timjs$elm_collage$Collage$Events$onMouseDown = $timjs$elm_collage$Collage$Events$mouseOn('mousedown');
 var $timjs$elm_collage$Collage$Events$onMouseUp = $timjs$elm_collage$Collage$Events$mouseOn('mouseup');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$pb4 = $elm$html$Html$Attributes$class('pb-4');
+var $rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$pt4 = $elm$html$Html$Attributes$class('pt-4');
 var $author$project$Components$GraphConstructor$graph_constructor_view = function (model) {
 	var graph = function () {
 		var _v2 = model.graphDraft;
@@ -9491,8 +10223,8 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 			return _Debug_todo(
 				'Components.GraphConstructor',
 				{
-					start: {line: 40, column: 20},
-					end: {line: 40, column: 30}
+					start: {line: 49, column: 20},
+					end: {line: 49, column: 30}
 				})('Bad input in GraphConstructor');
 		} else {
 			var points = _v2.a.points;
@@ -9525,7 +10257,7 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 						$timjs$elm_collage$Collage$traced,
 						A2(
 							$timjs$elm_collage$Collage$solid,
-							$timjs$elm_collage$Collage$thick,
+							$timjs$elm_collage$Collage$ultrathick,
 							$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
 						A2(
 							$timjs$elm_collage$Collage$segment,
@@ -9535,7 +10267,7 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 						$timjs$elm_collage$Collage$traced,
 						A2(
 							$timjs$elm_collage$Collage$solid,
-							$timjs$elm_collage$Collage$thick,
+							$timjs$elm_collage$Collage$ultrathick,
 							$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
 						A2(
 							$timjs$elm_collage$Collage$segment,
@@ -9545,7 +10277,7 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 						$timjs$elm_collage$Collage$traced,
 						A2(
 							$timjs$elm_collage$Collage$solid,
-							$timjs$elm_collage$Collage$thick,
+							$timjs$elm_collage$Collage$ultrathick,
 							$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
 						A2(
 							$timjs$elm_collage$Collage$segment,
@@ -9587,11 +10319,11 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 									model.focusedVertex) ? $timjs$elm_collage$Collage$outlined(
 									A2(
 										$timjs$elm_collage$Collage$solid,
-										$timjs$elm_collage$Collage$thick,
+										$timjs$elm_collage$Collage$ultrathick,
 										$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$red))) : $timjs$elm_collage$Collage$outlined(
 									A2(
 										$timjs$elm_collage$Collage$solid,
-										$timjs$elm_collage$Collage$thick,
+										$timjs$elm_collage$Collage$ultrathick,
 										$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue))))(
 									$timjs$elm_collage$Collage$circle(25))),
 								A2(
@@ -9652,13 +10384,41 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 						_List_fromArray(
 							[
 								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$Download)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Download')
+							])),
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$Upload)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Upload')
+							])),
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
 								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$ToHome)
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('Home')
 							]))
-					]))
+					])),
+				A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[$rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$pt4, $rundis$elm_bootstrap$Bootstrap$Utilities$Spacing$pb4]),
+				_List_fromArray(
+					[$author$project$Components$GraphConstructor$instructions]))
 			]));
 };
 var $author$project$MVC$Types$BuildGraph = {$: 'BuildGraph'};
