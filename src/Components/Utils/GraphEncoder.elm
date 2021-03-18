@@ -1,5 +1,10 @@
 module Components.Utils.GraphEncoder exposing (..)
 
+{-
+This file contains the logic to encode/decode networks to JSON 
+for the purposes of downloading/uploading.
+-}
+
 import Json.Encode as Mcoder
 import Json.Decode as Decoder
 import String
