@@ -55,8 +55,8 @@ graph_constructor_view model =
           [Collage.circle 25 
             |> 
               (
-                if Just p.name == model.focusedVertex then Collage.outlined (Collage.solid Collage.thick (uniform Color.red))
-                else Collage.outlined (Collage.solid Collage.thick (uniform Color.blue))
+                if Just p.name == model.focusedVertex then Collage.outlined (Collage.solid Collage.ultrathick (uniform Color.red))
+                else Collage.outlined (Collage.solid Collage.ultrathick (uniform Color.blue))
               )
             |> Collage.shift (p.x, p.y),
           Collage.Text.fromString p.name |> Collage.rendered |> Collage.shift (p.x, p.y)])
@@ -86,11 +86,11 @@ graph_constructor_view model =
       in
         Collage.group  
           [Collage.segment (e.point1.x, e.point1.y) (e.point2.x, e.point2.y) 
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.ultrathick (uniform Color.blue)),
           Collage.segment (midpoint.x, midpoint.y) (rotate 10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.ultrathick (uniform Color.blue)),
           Collage.segment (midpoint.x, midpoint.y) (rotate -10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform Color.blue)),
+            |> traced (Collage.solid Collage.ultrathick (uniform Color.blue)),
           Collage.Text.fromString (String.fromInt e.capacity) 
             |> Collage.Text.color (Color.green)
             |> Collage.rendered 

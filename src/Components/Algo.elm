@@ -42,7 +42,7 @@ algo_view model =
       Collage.Layout.impose
         (Collage.group
           [Collage.circle 25 
-            |> Collage.outlined (Collage.solid Collage.thick (uniform Color.blue))
+            |> Collage.outlined (Collage.solid Collage.ultrathick (uniform Color.blue))
             |> Collage.shift (p.x, p.y),
           Collage.Text.fromString p.name |> Collage.rendered |> Collage.shift (p.x, p.y)])
         (Collage.circle 25
@@ -69,11 +69,11 @@ algo_view model =
       in
         Collage.group  
           [Collage.segment (e.point1.x, e.point1.y) (e.point2.x, e.point2.y) 
-            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
+            |> traced (Collage.solid Collage.ultrathick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
           Collage.segment (midpoint.x, midpoint.y) (rotate 10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue)  )),
+            |> traced (Collage.solid Collage.ultrathick (uniform (if e.flow > 0 then Color.red else Color.blue)  )),
           Collage.segment (midpoint.x, midpoint.y) (rotate -10 20.0)
-            |> traced (Collage.solid Collage.thick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
+            |> traced (Collage.solid Collage.ultrathick (uniform (if e.flow > 0 then Color.red else Color.blue) )),
           Collage.Text.fromString (String.fromInt e.capacity) 
             |> Collage.Text.color (Color.green)
             |> Collage.rendered 
