@@ -1,9 +1,13 @@
 module Components.GraphConstructor exposing (..)
 
+{-
+This file corresponds to the graph constructor view.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
-import Html exposing (Html, text)
-import Html.Attributes
+import Html exposing (..)
+import Html.Attributes exposing (href)
 import Debug
 import Collage exposing (circle, rectangle, filled, uniform, traced)
 import Collage.Layout exposing (at, topLeft, empty)
@@ -18,6 +22,10 @@ import Bootstrap.Grid as Grid
 import Bootstrap.CDN as CDN
 import Bootstrap.Button as Button
 import Bootstrap.ButtonGroup as ButtonGroup
+import Bootstrap.ListGroup as ListGroup
+import Bootstrap.Utilities.Flex as Flex
+import Bootstrap.Utilities.Size as Size
+import Bootstrap.Utilities.Spacing as Spacing
 import Maybe
 import Collage.Events
 import String exposing (fromInt)
@@ -117,5 +125,44 @@ graph_constructor_view model =
           [
             ButtonGroup.button [Button.primary, Button.onClick GraphConstructorToAlgo] [text "Compute Max Flow"],
             ButtonGroup.button [Button.primary, Button.onClick ToHome] [text "Home"]
-          ]
+          ],
+          div [Spacing.pt4, Spacing.pb4] [instructions]
         ]
+
+
+instructions =
+  ListGroup.custom
+    [ ListGroup.anchor
+        [
+          ListGroup.disabled,
+          ListGroup.attrs [ href "#", Flex.col, Flex.alignItemsStart ]
+        ]
+        [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+            [ h5 [ Spacing.mb1 ] [ text "Add vertex along edge" ] ]
+        , p [ Spacing.mb1 ] [ text "Clicking on edge will add another vertex along that edge." ]
+        ]
+    , ListGroup.anchor
+        [ 
+          ListGroup.disabled,
+          ListGroup.attrs [ href "#", Flex.col, Flex.alignItemsStart ] ]
+        [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+            [ h5 [ Spacing.mb1 ] [ text "Move vertex to new column" ] ]
+        , p [ Spacing.mb1 ] [ text "Holding shift and clicking on an edge will increment the capacity along that edge in the direction of the arrow by 1." ]
+        ]
+    , ListGroup.anchor
+        [ 
+          ListGroup.disabled,
+          ListGroup.attrs [ href "#", Flex.col, Flex.alignItemsStart ] ]
+        [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+            [ h5 [ Spacing.mb1 ] [ text "Add edge between vertices at most one column apart" ] ]
+        , p [ Spacing.mb1 ] [ text "Dragging from vertex A to vertex B will move vertex A into the column of vertex B." ]
+        ]
+    , ListGroup.anchor
+        [ 
+          ListGroup.disabled,
+          ListGroup.attrs [ href "#", Flex.col, Flex.alignItemsStart ] ]
+        [ div [ Flex.block, Flex.justifyBetween, Size.w100 ]
+            [ h5 [ Spacing.mb1 ] [ text "Increment capacity along edge" ] ]
+        , p [ Spacing.mb1 ] [ text "Holding shift and dragging from vertex A to vertex B will add an edge from vertex A to vertex B, provided theses vertices are at most one column apart." ]
+        ]
+    ]

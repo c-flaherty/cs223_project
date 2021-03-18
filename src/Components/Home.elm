@@ -1,5 +1,9 @@
 module Components.Home exposing (..)
 
+{-
+This file corresponds to the home view.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
 import Html exposing (Html, text)
@@ -25,6 +29,7 @@ import Json.Decode as Decode
 import Browser.Events
 import Maybe
 import Time
+
 -------------------------------------------------------
 
 import MVC.Types exposing (..)

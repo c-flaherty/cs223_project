@@ -1,5 +1,9 @@
 module Components.Utils.GraphConstructorHelpers exposing (..)
 
+{-
+This file provides helper functions for the graph constructor view.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
 import Html exposing (Html, text)

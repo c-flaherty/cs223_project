@@ -1,5 +1,9 @@
 module MVC.View exposing (..)
 
+{- 
+This file wraps the different views.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
 import Html exposing (Html, text)

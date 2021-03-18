@@ -1,5 +1,9 @@
 module MVC.State exposing (..)
 
+{-
+This file is responsible for state management across the app.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
 import Html exposing (Html, text)

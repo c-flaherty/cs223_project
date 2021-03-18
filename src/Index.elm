@@ -1,5 +1,9 @@
 module Index exposing (..)
 
+{-
+Compiling this file produces the index.html page for the app.
+-}
+
 import Html 
 import Browser
 

@@ -5205,7 +5205,7 @@ var $elm$core$Task$perform = F2(
 	});
 var $elm$browser$Browser$element = _Browser_element;
 var $author$project$MVC$Types$Home = {$: 'Home'};
-var $author$project$MVC$State$initModel = {computationNetwork: $elm$core$Maybe$Nothing, focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$MVC$Types$Home, resNetwork: $elm$core$Maybe$Nothing, shiftDown: false};
+var $author$project$MVC$State$initModel = {computationNetwork: $elm$core$Maybe$Nothing, focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$MVC$Types$Home, resNetwork: $elm$core$Maybe$Nothing, shiftDown: false, visitingFromConstructor: false};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$MVC$State$init = function (_v0) {
@@ -6325,8 +6325,8 @@ var $author$project$Components$Utils$GraphConstructorHelpers$getIndex = F2(
 			return _Debug_todo(
 				'Components.Utils.GraphConstructorHelpers',
 				{
-					start: {line: 178, column: 11},
-					end: {line: 178, column: 21}
+					start: {line: 119, column: 11},
+					end: {line: 119, column: 21}
 				})('Bad input in insertBetween');
 		} else {
 			var c = ls.a;
@@ -6380,15 +6380,15 @@ var $author$project$Components$Utils$GraphConstructorHelpers$insertPointWithData
 					return _Debug_todo(
 						'Components.Utils.GraphConstructorHelpers',
 						{
-							start: {line: 221, column: 19},
-							end: {line: 221, column: 29}
+							start: {line: 162, column: 19},
+							end: {line: 162, column: 29}
 						})('Poorly formed input in insertBetween');
 				} else {
 					return _Debug_todo(
 						'Components.Utils.GraphConstructorHelpers',
 						{
-							start: {line: 222, column: 19},
-							end: {line: 222, column: 29}
+							start: {line: 163, column: 19},
+							end: {line: 163, column: 29}
 						})('Poorly formed input in insertBetween');
 				}
 			} else {
@@ -6766,8 +6766,7 @@ var $author$project$Logic$Network$iterateNbrs = F3(
 					var path = _v1.b.a;
 					return _Utils_Tuple2(
 						new_visited,
-						$elm$core$Maybe$Just(
-							A2($elm$core$List$cons, next, path)));
+						$elm$core$Maybe$Just(path));
 				} else {
 					var new_visited = _v1.a;
 					var _v2 = _v1.b;
@@ -6927,6 +6926,7 @@ var $author$project$Logic$Network$pushFlow = F4(
 	function (network, resnet, aug_path, aug_flow) {
 		pushFlow:
 		while (true) {
+			var _v0 = A2($elm$core$Debug$log, 'pushFlow aug_path', aug_path);
 			if (aug_path.b) {
 				var e = aug_path.a;
 				var pathrest = aug_path.b;
@@ -7002,6 +7002,13 @@ var $author$project$Logic$Network$ford_fulkerson_helper = F2(
 			};
 		}
 	});
+var $author$project$MVC$Utils$StateHelpers$graphDraftToNetwork = function (draft) {
+	return {
+		adj: A3($elm$core$List$foldr, $elm$core$Dict$union, $elm$core$Dict$empty, draft),
+		sink: 't',
+		source: 's'
+	};
+};
 var $author$project$Components$Utils$GraphConstructorHelpers$incrementCapacity = F3(
 	function (p1, p2, ls) {
 		if (!ls.b) {
@@ -7094,15 +7101,15 @@ var $author$project$Components$Utils$GraphConstructorHelpers$insertPoint = F4(
 				return _Debug_todo(
 					'Components.Utils.GraphConstructorHelpers',
 					{
-						start: {line: 209, column: 19},
-						end: {line: 209, column: 29}
+						start: {line: 150, column: 19},
+						end: {line: 150, column: 29}
 					})('Poorly formed input in insertBetween');
 			} else {
 				return _Debug_todo(
 					'Components.Utils.GraphConstructorHelpers',
 					{
-						start: {line: 210, column: 19},
-						end: {line: 210, column: 29}
+						start: {line: 151, column: 19},
+						end: {line: 151, column: 29}
 					})('Poorly formed input in insertBetween');
 			}
 		} else {
@@ -7273,7 +7280,6 @@ var $author$project$Components$Utils$GraphConstructorHelpers$insertBetween = F3(
 				});
 		}
 	});
-var $author$project$MVC$Types$Forward = {$: 'Forward'};
 var $elm$core$List$append = F2(
 	function (xs, ys) {
 		if (!ys.b) {
@@ -7290,131 +7296,24 @@ var $elm$core$List$concatMap = F2(
 		return $elm$core$List$concat(
 			A2($elm$core$List$map, f, list));
 	});
+var $elm$core$Dict$filter = F2(
+	function (isGood, dict) {
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (k, v, d) {
+					return A2(isGood, k, v) ? A3($elm$core$Dict$insert, k, v, d) : d;
+				}),
+			$elm$core$Dict$empty,
+			dict);
+	});
 var $elm$core$Set$fromList = function (list) {
 	return A3($elm$core$List$foldl, $elm$core$Set$insert, $elm$core$Set$empty, list);
 };
-var $elm$core$Set$union = F2(
-	function (_v0, _v1) {
-		var dict1 = _v0.a;
-		var dict2 = _v1.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A2($elm$core$Dict$union, dict1, dict2));
-	});
-var $elm$core$Dict$values = function (dict) {
-	return A3(
-		$elm$core$Dict$foldr,
-		F3(
-			function (key, value, valueList) {
-				return A2($elm$core$List$cons, value, valueList);
-			}),
-		_List_Nil,
-		dict);
-};
-var $author$project$Utils$ViewHelpers$networkToModel = F2(
-	function (model, g) {
-		var genModelColumns = F4(
-			function (adj, visited, cols, current) {
-				genModelColumns:
-				while (true) {
-					if (!current.b) {
-						return cols;
-					} else {
-						var possible_next = A2(
-							$elm$core$List$concatMap,
-							function (k) {
-								return A3(
-									$elm$core$Basics$composeL,
-									$elm$core$Dict$keys,
-									$elm$core$Maybe$withDefault($elm$core$Dict$empty),
-									A2($elm$core$Dict$get, k, adj));
-							},
-							current);
-						var next = A3(
-							$elm$core$Basics$composeL,
-							$elm$core$Set$toList,
-							$elm$core$Set$fromList,
-							A2(
-								$elm$core$List$filter,
-								function (v) {
-									return !A2($elm$core$Set$member, v, visited);
-								},
-								possible_next));
-						var new_visited = A2(
-							$elm$core$Set$union,
-							visited,
-							$elm$core$Set$fromList(next));
-						var $temp$adj = adj,
-							$temp$visited = new_visited,
-							$temp$cols = _Utils_ap(
-							cols,
-							_List_fromArray(
-								[next])),
-							$temp$current = next;
-						adj = $temp$adj;
-						visited = $temp$visited;
-						cols = $temp$cols;
-						current = $temp$current;
-						continue genModelColumns;
-					}
-				}
-			});
-		var genColPos = F2(
-			function (x, col) {
-				if (col.b && (!col.b.b)) {
-					var v = col.a;
-					return _List_fromArray(
-						[
-							{name: v, x: x, y: 250}
-						]);
-				} else {
-					return A2(
-						$elm$core$List$indexedMap,
-						function (y_idx) {
-							return function (v) {
-								return {
-									name: v,
-									x: x,
-									y: y_idx * ((500 / ($elm$core$List$length(col) - 1)) | 0)
-								};
-							};
-						},
-						col);
-				}
-			});
-		var columns = A4(
-			genModelColumns,
-			g.adj,
-			$elm$core$Set$empty,
-			_List_fromArray(
-				[
-					_List_fromArray(
-					[g.source])
-				]),
-			_List_fromArray(
-				[g.source]));
-		var num_columns = $elm$core$List$length(columns);
-		var verts = A3(
-			$elm$core$List$foldr,
-			function (p) {
-				return function (d) {
-					return A3(
-						$elm$core$Dict$insert,
-						p.name,
-						{name: p.name, x: p.x, y: p.y},
-						d);
-				};
-			},
-			$elm$core$Dict$empty,
-			$elm$core$List$concat(
-				A2(
-					$elm$core$List$indexedMap,
-					function (x_idx) {
-						return function (col) {
-							return A2(genColPos, x_idx * (1000.0 / (num_columns - 1)), col);
-						};
-					},
-					columns)));
-		var edges = function (tmp) {
+var $author$project$MVC$Types$Forward = {$: 'Forward'};
+var $author$project$MVC$Utils$StateHelpers$genEdges = F2(
+	function (verts, adj) {
+		return function (tmp) {
 			var removeMaybe = function (ls) {
 				removeMaybe:
 				while (true) {
@@ -7422,13 +7321,13 @@ var $author$project$Utils$ViewHelpers$networkToModel = F2(
 						return _List_Nil;
 					} else {
 						if (((ls.a.a.$ === 'Just') && (ls.a.b.$ === 'Just')) && (ls.a.c.c.$ === 'Forward')) {
-							var _v6 = ls.a;
-							var t1 = _v6.a.a;
-							var t2 = _v6.b.a;
+							var _v5 = ls.a;
+							var t1 = _v5.a.a;
+							var t2 = _v5.b.a;
+							var _v6 = _v5.c;
+							var capacity = _v6.a;
+							var flow = _v6.b;
 							var _v7 = _v6.c;
-							var capacity = _v7.a;
-							var flow = _v7.b;
-							var _v8 = _v7.c;
 							var lss = ls.b;
 							return A2(
 								$elm$core$List$cons,
@@ -7448,16 +7347,16 @@ var $author$project$Utils$ViewHelpers$networkToModel = F2(
 			$elm$core$List$concat(
 				A2(
 					$elm$core$List$map,
-					function (_v2) {
-						var k = _v2.a;
-						var v = _v2.b;
+					function (_v1) {
+						var k = _v1.a;
+						var v = _v1.b;
 						return A2(
 							$elm$core$List$map,
-							function (_v3) {
-								var o = _v3.a;
-								var _v4 = _v3.b;
-								var capacity = _v4.a;
-								var flow = _v4.b;
+							function (_v2) {
+								var o = _v2.a;
+								var _v3 = _v2.b;
+								var capacity = _v3.a;
+								var flow = _v3.b;
 								return _Utils_Tuple3(
 									A2($elm$core$Dict$get, k, verts),
 									A2($elm$core$Dict$get, o, verts),
@@ -7467,58 +7366,390 @@ var $author$project$Utils$ViewHelpers$networkToModel = F2(
 					},
 					A2(
 						$elm$core$List$map,
-						function (_v1) {
-							var k = _v1.a;
-							var v = _v1.b;
+						function (_v0) {
+							var k = _v0.a;
+							var v = _v0.b;
 							return _Utils_Tuple2(
 								k,
 								$elm$core$Dict$toList(v));
 						},
-						$elm$core$Dict$toList(g.adj)))));
-		return _Utils_update(
-			model,
-			{
-				computationNetwork: $elm$core$Maybe$Just(g),
-				focusedVertex: $elm$core$Maybe$Nothing,
-				graph: $elm$core$Maybe$Just(
-					{
-						edges: edges,
-						points: $elm$core$Dict$values(verts)
-					}),
-				graphDraft: $elm$core$Maybe$Nothing,
-				page: $author$project$MVC$Types$Algo
-			});
+						$elm$core$Dict$toList(adj)))));
 	});
+var $author$project$MVC$Utils$StateHelpers$genColPos = F2(
+	function (x, col) {
+		if (col.b && (!col.b.b)) {
+			var v = col.a;
+			return _List_fromArray(
+				[
+					{name: v, x: x, y: 250}
+				]);
+		} else {
+			return A2(
+				$elm$core$List$indexedMap,
+				function (y_idx) {
+					return function (v) {
+						return {
+							name: v,
+							x: x,
+							y: y_idx * ((500 / ($elm$core$List$length(col) - 1)) | 0)
+						};
+					};
+				},
+				col);
+		}
+	});
+var $author$project$MVC$Utils$StateHelpers$genVerts = function (columns) {
+	return A3(
+		$elm$core$List$foldr,
+		function (p) {
+			return function (d) {
+				return A3(
+					$elm$core$Dict$insert,
+					p.name,
+					{name: p.name, x: p.x, y: p.y},
+					d);
+			};
+		},
+		$elm$core$Dict$empty,
+		$elm$core$List$concat(
+			A2(
+				$elm$core$List$indexedMap,
+				function (x_idx) {
+					return function (col) {
+						return A2(
+							$author$project$MVC$Utils$StateHelpers$genColPos,
+							x_idx * (1000.0 / ($elm$core$List$length(columns) - 1)),
+							col);
+					};
+				},
+				columns)));
+};
+var $elm$core$Dict$diff = F2(
+	function (t1, t2) {
+		return A3(
+			$elm$core$Dict$foldl,
+			F3(
+				function (k, v, t) {
+					return A2($elm$core$Dict$remove, k, t);
+				}),
+			t1,
+			t2);
+	});
+var $elm$core$Set$diff = F2(
+	function (_v0, _v1) {
+		var dict1 = _v0.a;
+		var dict2 = _v1.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$diff, dict1, dict2));
+	});
+var $elm$core$Dict$intersect = F2(
+	function (t1, t2) {
+		return A2(
+			$elm$core$Dict$filter,
+			F2(
+				function (k, _v0) {
+					return A2($elm$core$Dict$member, k, t2);
+				}),
+			t1);
+	});
+var $elm$core$Set$intersect = F2(
+	function (_v0, _v1) {
+		var dict1 = _v0.a;
+		var dict2 = _v1.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$intersect, dict1, dict2));
+	});
+var $elm$core$Set$remove = F2(
+	function (key, _v0) {
+		var dict = _v0.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$remove, key, dict));
+	});
+var $elm$core$Set$union = F2(
+	function (_v0, _v1) {
+		var dict1 = _v0.a;
+		var dict2 = _v1.a;
+		return $elm$core$Set$Set_elm_builtin(
+			A2($elm$core$Dict$union, dict1, dict2));
+	});
+var $elm$core$Dict$values = function (dict) {
+	return A3(
+		$elm$core$Dict$foldr,
+		F3(
+			function (key, value, valueList) {
+				return A2($elm$core$List$cons, value, valueList);
+			}),
+		_List_Nil,
+		dict);
+};
+var $author$project$MVC$Utils$StateHelpers$topologicalSortCol = function (col) {
+	var startNodes = A2(
+		$elm$core$Set$diff,
+		$elm$core$Set$fromList(
+			$elm$core$Dict$keys(col)),
+		$elm$core$Set$fromList(
+			A2(
+				$elm$core$List$concatMap,
+				$elm$core$Dict$keys,
+				$elm$core$Dict$values(col))));
+	var sorter = F2(
+		function (acc, start) {
+			sorter:
+			while (true) {
+				var _v0 = $elm$core$Set$toList(start);
+				if (!_v0.b) {
+					return $elm$core$List$reverse(acc);
+				} else {
+					var x = _v0.a;
+					var xs = _v0.b;
+					var tailStart = A2($elm$core$Set$remove, x, start);
+					var nextVerts = A2(
+						$elm$core$Set$intersect,
+						$elm$core$Set$fromList(
+							$elm$core$Dict$keys(col)),
+						A2(
+							$elm$core$Maybe$withDefault,
+							$elm$core$Set$empty,
+							A2(
+								$elm$core$Maybe$andThen,
+								function (d) {
+									return $elm$core$Maybe$Just(
+										$elm$core$Set$fromList(
+											$elm$core$Dict$keys(d)));
+								},
+								A2($elm$core$Dict$get, x, col))));
+					var $temp$acc = A2($elm$core$List$cons, x, acc),
+						$temp$start = A2($elm$core$Set$union, tailStart, nextVerts);
+					acc = $temp$acc;
+					start = $temp$start;
+					continue sorter;
+				}
+			}
+		});
+	return A2(sorter, _List_Nil, startNodes);
+};
+var $author$project$MVC$Utils$StateHelpers$networkToGraph = function (g) {
+	var genModelColumns = F4(
+		function (adj, visited, cols, current) {
+			genModelColumns:
+			while (true) {
+				if (!current.b) {
+					return cols;
+				} else {
+					var possible_next = A2(
+						$elm$core$List$concatMap,
+						function (k) {
+							return A3(
+								$elm$core$Basics$composeL,
+								$elm$core$Dict$keys,
+								$elm$core$Maybe$withDefault($elm$core$Dict$empty),
+								A2($elm$core$Dict$get, k, adj));
+						},
+						current);
+					var next = A3(
+						$elm$core$Basics$composeL,
+						$elm$core$Set$toList,
+						$elm$core$Set$fromList,
+						A2(
+							$elm$core$List$filter,
+							function (v) {
+								return !A2($elm$core$Set$member, v, visited);
+							},
+							possible_next));
+					var new_visited = A2(
+						$elm$core$Set$union,
+						visited,
+						$elm$core$Set$fromList(next));
+					var $temp$adj = adj,
+						$temp$visited = new_visited,
+						$temp$cols = _Utils_ap(
+						cols,
+						_List_fromArray(
+							[next])),
+						$temp$current = next;
+					adj = $temp$adj;
+					visited = $temp$visited;
+					cols = $temp$cols;
+					current = $temp$current;
+					continue genModelColumns;
+				}
+			}
+		});
+	var columnVerts = A4(
+		genModelColumns,
+		g.adj,
+		$elm$core$Set$empty,
+		_List_fromArray(
+			[
+				_List_fromArray(
+				[g.source])
+			]),
+		_List_fromArray(
+			[g.source]));
+	var columns = A2(
+		$elm$core$List$map,
+		$author$project$MVC$Utils$StateHelpers$topologicalSortCol,
+		A2(
+			$elm$core$List$map,
+			function (vs) {
+				return A2(
+					$elm$core$Dict$filter,
+					function (k) {
+						return function (v) {
+							return A2($elm$core$List$member, k, vs);
+						};
+					},
+					g.adj);
+			},
+			columnVerts));
+	var verts = $author$project$MVC$Utils$StateHelpers$genVerts(columns);
+	var edges = A2($author$project$MVC$Utils$StateHelpers$genEdges, verts, g.adj);
+	return {
+		edges: edges,
+		points: $elm$core$Dict$values(verts)
+	};
+};
+var $author$project$MVC$Utils$StateHelpers$networkToGraphDraft = F2(
+	function (_v0, current_draft) {
+		var source = _v0.source;
+		var sink = _v0.sink;
+		var adj = _v0.adj;
+		return A2(
+			$elm$core$List$map,
+			function (col_verts) {
+				return A2(
+					$elm$core$Dict$filter,
+					function (vert) {
+						return function (_v1) {
+							return A2($elm$core$Dict$member, vert, col_verts);
+						};
+					},
+					adj);
+			},
+			current_draft);
+	});
+var $elm$core$Dict$map = F2(
+	function (func, dict) {
+		if (dict.$ === 'RBEmpty_elm_builtin') {
+			return $elm$core$Dict$RBEmpty_elm_builtin;
+		} else {
+			var color = dict.a;
+			var key = dict.b;
+			var value = dict.c;
+			var left = dict.d;
+			var right = dict.e;
+			return A5(
+				$elm$core$Dict$RBNode_elm_builtin,
+				color,
+				key,
+				A2(func, key, value),
+				A2($elm$core$Dict$map, func, left),
+				A2($elm$core$Dict$map, func, right));
+		}
+	});
+var $author$project$MVC$Utils$StateHelpers$resetFlowForDraft = function (draft) {
+	if (draft.$ === 'Nothing') {
+		return $elm$core$Maybe$Nothing;
+	} else {
+		var currentNum = draft.a.currentNum;
+		var points = draft.a.points;
+		return $elm$core$Maybe$Just(
+			{
+				currentNum: currentNum,
+				points: A2(
+					$elm$core$List$map,
+					$elm$core$Dict$map(
+						function (k) {
+							return function (v) {
+								return A2(
+									$elm$core$Dict$map,
+									function (k1) {
+										return function (_v1) {
+											var c = _v1.a;
+											var f = _v1.b;
+											return _Utils_Tuple2(c, 0);
+										};
+									},
+									v);
+							};
+						}),
+					points)
+			});
+	}
+};
 var $author$project$MVC$State$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'ToExample1':
-				var newModel = A2($author$project$Utils$ViewHelpers$networkToModel, model, $author$project$Examples$Example1$example1);
+				var graph = $author$project$MVC$Utils$StateHelpers$networkToGraph($author$project$Examples$Example1$example1);
 				return _Utils_Tuple2(
 					_Utils_update(
-						newModel,
-						{resNetwork: newModel.computationNetwork}),
+						model,
+						{
+							computationNetwork: $elm$core$Maybe$Just($author$project$Examples$Example1$example1),
+							graph: $elm$core$Maybe$Just(graph),
+							page: $author$project$MVC$Types$Algo,
+							resNetwork: $elm$core$Maybe$Just($author$project$Examples$Example1$example1)
+						}),
 					$elm$core$Platform$Cmd$none);
 			case 'BuildGraph':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $author$project$Components$Utils$GraphConstructorHelpers$initGraphDraft, page: $author$project$MVC$Types$GraphConstructor}),
+						{graphDraft: $author$project$Components$Utils$GraphConstructorHelpers$initGraphDraft, page: $author$project$MVC$Types$GraphConstructor}),
 					$elm$core$Platform$Cmd$none);
 			case 'ToHome':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$MVC$Types$Home}),
+						{focusedVertex: $elm$core$Maybe$Nothing, graph: $elm$core$Maybe$Nothing, graphDraft: $elm$core$Maybe$Nothing, page: $author$project$MVC$Types$Home, visitingFromConstructor: false}),
+					$elm$core$Platform$Cmd$none);
+			case 'GraphConstructorToAlgo':
+				var _v1 = model.graphDraft;
+				if (_v1.$ === 'Nothing') {
+					return _Debug_todo(
+						'MVC.State',
+						{
+							start: {line: 99, column: 20},
+							end: {line: 99, column: 30}
+						})('Bad User Flow in messge \'GraphConstructorToAlgo\'');
+				} else {
+					var currentNum = _v1.a.currentNum;
+					var points = _v1.a.points;
+					var net = $author$project$MVC$Utils$StateHelpers$graphDraftToNetwork(points);
+					var graph = $author$project$MVC$Utils$StateHelpers$networkToGraph(net);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								computationNetwork: $elm$core$Maybe$Just(net),
+								graph: $elm$core$Maybe$Just(graph),
+								page: $author$project$MVC$Types$Algo,
+								resNetwork: $elm$core$Maybe$Just(net),
+								visitingFromConstructor: true
+							}),
+						$elm$core$Platform$Cmd$none);
+				}
+			case 'AlgoToGraphConstructor':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							computationNetwork: $elm$core$Maybe$Nothing,
+							graphDraft: $author$project$MVC$Utils$StateHelpers$resetFlowForDraft(model.graphDraft),
+							page: $author$project$MVC$Types$GraphConstructor,
+							resNetwork: $elm$core$Maybe$Nothing,
+							visitingFromConstructor: false
+						}),
 					$elm$core$Platform$Cmd$none);
 			case 'ClickedOnEdge':
 				var point1 = msg.a.point1;
 				var point2 = msg.a.point2;
-				var _v1 = model.graphDraft;
-				if (_v1.$ === 'Nothing') {
+				var _v2 = model.graphDraft;
+				if (_v2.$ === 'Nothing') {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var draft = _v1.a;
+					var draft = _v2.a;
 					return model.shiftDown ? _Utils_Tuple2(
 						A3($author$project$Components$Utils$GraphConstructorHelpers$incrementCapacityOfModel, point1, point2, model),
 						$elm$core$Platform$Cmd$none) : _Utils_Tuple2(
@@ -7536,11 +7767,11 @@ var $author$project$MVC$State$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'MouseUpOnVertex':
 				var point = msg.a;
-				var _v2 = model.focusedVertex;
-				if (_v2.$ === 'Nothing') {
+				var _v3 = model.focusedVertex;
+				if (_v3.$ === 'Nothing') {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var point1 = _v2.a;
+					var point1 = _v3.a;
 					return model.shiftDown ? ((_Utils_eq(point, point1) || (point === 's')) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
 						A3($author$project$Components$Utils$GraphConstructorHelpers$addEdgeToModel, point1, point, model),
 						$elm$core$Platform$Cmd$none)) : (((point1 === 's') || ((point1 === 't') || ((point === 's') || ((point === 't') || _Utils_eq(point, point1))))) ? _Utils_Tuple2(model, $elm$core$Platform$Cmd$none) : _Utils_Tuple2(
@@ -7567,28 +7798,55 @@ var $author$project$MVC$State$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'Tick':
 				if (_Utils_eq(model.page, $author$project$MVC$Types$Algo)) {
-					var _v3 = _Utils_Tuple2(model.computationNetwork, model.resNetwork);
-					if ((_v3.a.$ === 'Just') && (_v3.b.$ === 'Just')) {
-						var cNet = _v3.a.a;
-						var rNet = _v3.b.a;
-						var _v4 = A2($author$project$Logic$Network$ford_fulkerson_helper, cNet, rNet);
-						var network = _v4.network;
-						var resnet = _v4.resnet;
-						var aug_path = _v4.aug_path;
-						var flow = _v4.flow;
-						var newModel = A2(
-							$author$project$Utils$ViewHelpers$networkToModel,
-							model,
-							A2($elm$core$Debug$log, 'network:', network));
-						return _Utils_Tuple2(
-							_Utils_update(
-								newModel,
-								{
-									resNetwork: $elm$core$Maybe$Just(resnet)
-								}),
-							$elm$core$Platform$Cmd$none);
+					if (model.visitingFromConstructor) {
+						var _v4 = _Utils_Tuple3(model.computationNetwork, model.resNetwork, model.graphDraft);
+						if (((_v4.a.$ === 'Just') && (_v4.b.$ === 'Just')) && (_v4.c.$ === 'Just')) {
+							var cNet = _v4.a.a;
+							var rNet = _v4.b.a;
+							var currentNum = _v4.c.a.currentNum;
+							var points = _v4.c.a.points;
+							var _v5 = A2($author$project$Logic$Network$ford_fulkerson_helper, cNet, rNet);
+							var network = _v5.network;
+							var resnet = _v5.resnet;
+							var aug_path = _v5.aug_path;
+							var flow = _v5.flow;
+							var newGraphDraft = A2($author$project$MVC$Utils$StateHelpers$networkToGraphDraft, network, points);
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										computationNetwork: $elm$core$Maybe$Just(network),
+										graphDraft: $elm$core$Maybe$Just(
+											{currentNum: currentNum, points: newGraphDraft}),
+										resNetwork: $elm$core$Maybe$Just(resnet)
+									}),
+								$elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
 					} else {
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						var _v6 = _Utils_Tuple2(model.computationNetwork, model.resNetwork);
+						if ((_v6.a.$ === 'Just') && (_v6.b.$ === 'Just')) {
+							var cNet = _v6.a.a;
+							var rNet = _v6.b.a;
+							var _v7 = A2($author$project$Logic$Network$ford_fulkerson_helper, cNet, rNet);
+							var network = _v7.network;
+							var resnet = _v7.resnet;
+							var aug_path = _v7.aug_path;
+							var flow = _v7.flow;
+							var graph = $author$project$MVC$Utils$StateHelpers$networkToGraph(network);
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{
+										computationNetwork: $elm$core$Maybe$Just(network),
+										graph: $elm$core$Maybe$Just(graph),
+										resNetwork: $elm$core$Maybe$Just(resnet)
+									}),
+								$elm$core$Platform$Cmd$none);
+						} else {
+							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						}
 					}
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -7597,6 +7855,7 @@ var $author$project$MVC$State$update = F2(
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$MVC$Types$AlgoToGraphConstructor = {$: 'AlgoToGraphConstructor'};
 var $author$project$MVC$Types$ToHome = {$: 'ToHome'};
 var $avh4$elm_color$Color$RgbaSpace = F4(
 	function (a, b, c, d) {
@@ -7767,6 +8026,104 @@ var $rundis$elm_bootstrap$Bootstrap$Button$button = F2(
 			$rundis$elm_bootstrap$Bootstrap$Internal$Button$buttonAttributes(options),
 			children);
 	});
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$ButtonItem = function (a) {
+	return {$: 'ButtonItem', a: a};
+};
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$button = F2(
+	function (options, children) {
+		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$ButtonItem(
+			A2($rundis$elm_bootstrap$Bootstrap$Button$button, options, children));
+	});
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$GroupItem = function (a) {
+	return {$: 'GroupItem', a: a};
+};
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$applyModifier = F2(
+	function (modifier, options) {
+		switch (modifier.$) {
+			case 'Size':
+				var size = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						size: $elm$core$Maybe$Just(size)
+					});
+			case 'Vertical':
+				return _Utils_update(
+					options,
+					{vertical: true});
+			default:
+				var attrs_ = modifier.a;
+				return _Utils_update(
+					options,
+					{
+						attributes: _Utils_ap(options.attributes, attrs_)
+					});
+		}
+	});
+var $elm$virtual_dom$VirtualDom$attribute = F2(
+	function (key, value) {
+		return A2(
+			_VirtualDom_attribute,
+			_VirtualDom_noOnOrFormAction(key),
+			_VirtualDom_noJavaScriptOrHtmlUri(value));
+	});
+var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$defaultOptions = {attributes: _List_Nil, size: $elm$core$Maybe$Nothing, vertical: false};
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$groupAttributes = F2(
+	function (toggle, modifiers) {
+		var options = A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$ButtonGroup$applyModifier, $rundis$elm_bootstrap$Bootstrap$ButtonGroup$defaultOptions, modifiers);
+		return _Utils_ap(
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$attribute, 'role', 'group'),
+					$elm$html$Html$Attributes$classList(
+					_List_fromArray(
+						[
+							_Utils_Tuple2('btn-group', true),
+							_Utils_Tuple2('btn-group-toggle', toggle),
+							_Utils_Tuple2('btn-group-vertical', options.vertical)
+						])),
+					A2($elm$html$Html$Attributes$attribute, 'data-toggle', 'buttons')
+				]),
+			_Utils_ap(
+				function () {
+					var _v0 = A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption, options.size);
+					if (_v0.$ === 'Just') {
+						var s = _v0.a;
+						return _List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('btn-group-' + s)
+							]);
+					} else {
+						return _List_Nil;
+					}
+				}(),
+				options.attributes));
+	});
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroupItem = F2(
+	function (options, items) {
+		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$GroupItem(
+			A2(
+				$elm$html$Html$div,
+				A2($rundis$elm_bootstrap$Bootstrap$ButtonGroup$groupAttributes, false, options),
+				A2(
+					$elm$core$List$map,
+					function (_v0) {
+						var elem = _v0.a;
+						return elem;
+					},
+					items)));
+	});
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$renderGroup = function (_v0) {
+	var elem = _v0.a;
+	return elem;
+};
+var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroup = F2(
+	function (options, items) {
+		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$renderGroup(
+			A2($rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroupItem, options, items));
+	});
 var $timjs$elm_collage$Collage$Core$Circle = function (a) {
 	return {$: 'Circle', a: a};
 };
@@ -7786,7 +8143,6 @@ var $timjs$elm_collage$Collage$Text$color = F2(
 				{color: newcolor}),
 			str);
 	});
-var $elm$html$Html$div = _VirtualDom_node('div');
 var $rundis$elm_bootstrap$Bootstrap$Grid$container = F2(
 	function (attributes, children) {
 		return A2(
@@ -7858,6 +8214,18 @@ var $timjs$elm_collage$Collage$Text$Upright = {$: 'Upright'};
 var $timjs$elm_collage$Collage$Text$normal = 16;
 var $timjs$elm_collage$Collage$Text$defaultStyle = {color: $avh4$elm_color$Color$black, line: $timjs$elm_collage$Collage$Text$None, shape: $timjs$elm_collage$Collage$Text$Upright, size: $timjs$elm_collage$Collage$Text$normal, typeface: $timjs$elm_collage$Collage$Text$Sansserif, weight: $timjs$elm_collage$Collage$Text$Regular};
 var $timjs$elm_collage$Collage$Text$fromString = $timjs$elm_collage$Collage$Core$Chunk($timjs$elm_collage$Collage$Text$defaultStyle);
+var $author$project$MVC$Utils$StateHelpers$graphDraftToGraph = function (draft) {
+	var columns = A2($elm$core$List$map, $author$project$MVC$Utils$StateHelpers$topologicalSortCol, draft);
+	var verts = $author$project$MVC$Utils$StateHelpers$genVerts(columns);
+	var edges = A2(
+		$author$project$MVC$Utils$StateHelpers$genEdges,
+		verts,
+		A3($elm$core$List$foldr, $elm$core$Dict$union, $elm$core$Dict$empty, draft));
+	return {
+		edges: edges,
+		points: $elm$core$Dict$values(verts)
+	};
+};
 var $avh4$elm_color$Color$green = A4($avh4$elm_color$Color$RgbaSpace, 115 / 255, 210 / 255, 22 / 255, 1.0);
 var $timjs$elm_collage$Collage$Core$Group = function (a) {
 	return {$: 'Group', a: a};
@@ -8874,6 +9242,35 @@ var $timjs$elm_collage$Collage$traced = F2(
 	});
 var $avh4$elm_color$Color$white = A4($avh4$elm_color$Color$RgbaSpace, 255 / 255, 255 / 255, 255 / 255, 1.0);
 var $author$project$Components$Algo$algo_view = function (model) {
+	var graph = function () {
+		if (model.visitingFromConstructor) {
+			var _v0 = model.graphDraft;
+			if (_v0.$ === 'Nothing') {
+				return _Debug_todo(
+					'Components.Algo',
+					{
+						start: {line: 86, column: 22},
+						end: {line: 86, column: 32}
+					})('Bad input in GraphConstructor');
+			} else {
+				var points = _v0.a.points;
+				return $author$project$MVC$Utils$StateHelpers$graphDraftToGraph(points);
+			}
+		} else {
+			var _v1 = model.graph;
+			if (_v1.$ === 'Nothing') {
+				return _Debug_todo(
+					'Components.Algo',
+					{
+						start: {line: 90, column: 22},
+						end: {line: 90, column: 32}
+					})('Bad input in GraphConstructor');
+			} else {
+				var g = _v1.a;
+				return g;
+			}
+		}
+	}();
 	var createEdge = function (e) {
 		var parallel_normed = function () {
 			var y = e.point2.y - e.point1.y;
@@ -8897,7 +9294,8 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					A2(
 						$timjs$elm_collage$Collage$solid,
 						$timjs$elm_collage$Collage$thick,
-						$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
+						$timjs$elm_collage$Collage$uniform(
+							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
 						$timjs$elm_collage$Collage$segment,
 						_Utils_Tuple2(e.point1.x, e.point1.y),
@@ -8907,7 +9305,8 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					A2(
 						$timjs$elm_collage$Collage$solid,
 						$timjs$elm_collage$Collage$thick,
-						$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
+						$timjs$elm_collage$Collage$uniform(
+							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
 						$timjs$elm_collage$Collage$segment,
 						_Utils_Tuple2(midpoint.x, midpoint.y),
@@ -8917,7 +9316,8 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					A2(
 						$timjs$elm_collage$Collage$solid,
 						$timjs$elm_collage$Collage$thick,
-						$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$blue)),
+						$timjs$elm_collage$Collage$uniform(
+							(e.flow > 0) ? $avh4$elm_color$Color$red : $avh4$elm_color$Color$blue)),
 					A2(
 						$timjs$elm_collage$Collage$segment,
 						_Utils_Tuple2(midpoint.x, midpoint.y),
@@ -8942,18 +9342,7 @@ var $author$project$Components$Algo$algo_view = function (model) {
 								$elm$core$String$fromInt(e.flow)))))
 				]));
 	};
-	var edges = A2(
-		$elm$core$List$map,
-		createEdge,
-		A2(
-			$elm$core$Maybe$withDefault,
-			_List_Nil,
-			A2(
-				$elm$core$Maybe$andThen,
-				function (g) {
-					return $elm$core$Maybe$Just(g.edges);
-				},
-				model.graph)));
+	var edgesViz = A2($elm$core$List$map, createEdge, graph.edges);
 	var createCirc = function (p) {
 		return A2(
 			$timjs$elm_collage$Collage$Layout$impose,
@@ -8984,27 +9373,16 @@ var $author$project$Components$Algo$algo_view = function (model) {
 					$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$white),
 					$timjs$elm_collage$Collage$circle(25))));
 	};
-	var points = A2(
-		$elm$core$List$map,
-		createCirc,
-		A2(
-			$elm$core$Maybe$withDefault,
-			_List_Nil,
-			A2(
-				$elm$core$Maybe$andThen,
-				function (g) {
-					return $elm$core$Maybe$Just(g.points);
-				},
-				model.graph)));
+	var pointsViz = A2($elm$core$List$map, createCirc, graph.points);
 	var foreground = A2(
 		$timjs$elm_collage$Collage$shift,
-		_Utils_Tuple2(-400, -250),
+		_Utils_Tuple2(-500, -250),
 		$timjs$elm_collage$Collage$group(
-			_Utils_ap(points, edges)));
+			_Utils_ap(pointsViz, edgesViz)));
 	var background = A2(
 		$timjs$elm_collage$Collage$outlined,
 		$timjs$elm_collage$Collage$invisible,
-		A2($timjs$elm_collage$Collage$rectangle, 1000, 600));
+		A2($timjs$elm_collage$Collage$rectangle, 1200, 600));
 	var scene = A2($timjs$elm_collage$Collage$Layout$impose, foreground, background);
 	return A2(
 		$rundis$elm_bootstrap$Bootstrap$Grid$container,
@@ -9018,7 +9396,34 @@ var $author$project$Components$Algo$algo_view = function (model) {
 			[
 				$rundis$elm_bootstrap$Bootstrap$CDN$stylesheet,
 				$timjs$elm_collage$Collage$Render$svg(scene),
-				A2(
+				model.visitingFromConstructor ? A2(
+				$rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroup,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$AlgoToGraphConstructor)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Return to Constructor')
+							])),
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$ToHome)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Home')
+							]))
+					])) : A2(
 				$rundis$elm_bootstrap$Bootstrap$Button$button,
 				_List_fromArray(
 					[
@@ -9034,229 +9439,12 @@ var $author$project$Components$Algo$algo_view = function (model) {
 var $author$project$MVC$Types$ClickedOnEdge = function (a) {
 	return {$: 'ClickedOnEdge', a: a};
 };
+var $author$project$MVC$Types$GraphConstructorToAlgo = {$: 'GraphConstructorToAlgo'};
 var $author$project$MVC$Types$MouseDownOnVertex = function (a) {
 	return {$: 'MouseDownOnVertex', a: a};
 };
 var $author$project$MVC$Types$MouseUpOnVertex = function (a) {
 	return {$: 'MouseUpOnVertex', a: a};
-};
-var $elm$core$Dict$diff = F2(
-	function (t1, t2) {
-		return A3(
-			$elm$core$Dict$foldl,
-			F3(
-				function (k, v, t) {
-					return A2($elm$core$Dict$remove, k, t);
-				}),
-			t1,
-			t2);
-	});
-var $elm$core$Set$diff = F2(
-	function (_v0, _v1) {
-		var dict1 = _v0.a;
-		var dict2 = _v1.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A2($elm$core$Dict$diff, dict1, dict2));
-	});
-var $elm$core$Dict$filter = F2(
-	function (isGood, dict) {
-		return A3(
-			$elm$core$Dict$foldl,
-			F3(
-				function (k, v, d) {
-					return A2(isGood, k, v) ? A3($elm$core$Dict$insert, k, v, d) : d;
-				}),
-			$elm$core$Dict$empty,
-			dict);
-	});
-var $elm$core$Dict$intersect = F2(
-	function (t1, t2) {
-		return A2(
-			$elm$core$Dict$filter,
-			F2(
-				function (k, _v0) {
-					return A2($elm$core$Dict$member, k, t2);
-				}),
-			t1);
-	});
-var $elm$core$Set$intersect = F2(
-	function (_v0, _v1) {
-		var dict1 = _v0.a;
-		var dict2 = _v1.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A2($elm$core$Dict$intersect, dict1, dict2));
-	});
-var $elm$core$Set$remove = F2(
-	function (key, _v0) {
-		var dict = _v0.a;
-		return $elm$core$Set$Set_elm_builtin(
-			A2($elm$core$Dict$remove, key, dict));
-	});
-var $author$project$Components$Utils$GraphConstructorHelpers$graphDraftToGraph = function (model) {
-	var _v0 = model.graphDraft;
-	if (_v0.$ === 'Nothing') {
-		return {edges: _List_Nil, points: _List_Nil};
-	} else {
-		var draft = _v0.a;
-		var topologicalSortCol = function (col) {
-			var startNodes = A2(
-				$elm$core$Set$diff,
-				$elm$core$Set$fromList(
-					$elm$core$Dict$keys(col)),
-				$elm$core$Set$fromList(
-					A2(
-						$elm$core$List$concatMap,
-						$elm$core$Dict$keys,
-						$elm$core$Dict$values(col))));
-			var sorter = F2(
-				function (acc, start) {
-					sorter:
-					while (true) {
-						var _v10 = $elm$core$Set$toList(start);
-						if (!_v10.b) {
-							return $elm$core$List$reverse(acc);
-						} else {
-							var x = _v10.a;
-							var xs = _v10.b;
-							var tailStart = A2($elm$core$Set$remove, x, start);
-							var nextVerts = A2(
-								$elm$core$Set$intersect,
-								$elm$core$Set$fromList(
-									$elm$core$Dict$keys(col)),
-								A2(
-									$elm$core$Maybe$withDefault,
-									$elm$core$Set$empty,
-									A2(
-										$elm$core$Maybe$andThen,
-										function (d) {
-											return $elm$core$Maybe$Just(
-												$elm$core$Set$fromList(
-													$elm$core$Dict$keys(d)));
-										},
-										A2($elm$core$Dict$get, x, col))));
-							var $temp$acc = A2($elm$core$List$cons, x, acc),
-								$temp$start = A2($elm$core$Set$union, tailStart, nextVerts);
-							acc = $temp$acc;
-							start = $temp$start;
-							continue sorter;
-						}
-					}
-				});
-			return A2(sorter, _List_Nil, startNodes);
-		};
-		var genColPos = F2(
-			function (x, col) {
-				if (col.b && (!col.b.b)) {
-					var v = col.a;
-					return _List_fromArray(
-						[
-							{name: v, x: x, y: 250}
-						]);
-				} else {
-					return A2(
-						$elm$core$List$indexedMap,
-						function (y_idx) {
-							return function (v) {
-								return {
-									name: v,
-									x: x,
-									y: y_idx * ((500 / ($elm$core$List$length(col) - 1)) | 0)
-								};
-							};
-						},
-						col);
-				}
-			});
-		var columns = A2($elm$core$List$map, topologicalSortCol, draft.points);
-		var num_columns = $elm$core$List$length(columns);
-		var verts = A3(
-			$elm$core$List$foldr,
-			function (p) {
-				return function (d) {
-					return A3(
-						$elm$core$Dict$insert,
-						p.name,
-						{name: p.name, x: p.x, y: p.y},
-						d);
-				};
-			},
-			$elm$core$Dict$empty,
-			$elm$core$List$concat(
-				A2(
-					$elm$core$List$indexedMap,
-					function (x_idx) {
-						return function (col) {
-							return A2(genColPos, x_idx * (1000.0 / (num_columns - 1)), col);
-						};
-					},
-					columns)));
-		var edges = function (tmp) {
-			var removeMaybe = function (ls) {
-				removeMaybe:
-				while (true) {
-					if (!ls.b) {
-						return _List_Nil;
-					} else {
-						if (((ls.a.a.$ === 'Just') && (ls.a.b.$ === 'Just')) && (ls.a.c.c.$ === 'Forward')) {
-							var _v6 = ls.a;
-							var t1 = _v6.a.a;
-							var t2 = _v6.b.a;
-							var _v7 = _v6.c;
-							var capacity = _v7.a;
-							var flow = _v7.b;
-							var _v8 = _v7.c;
-							var lss = ls.b;
-							return A2(
-								$elm$core$List$cons,
-								{capacity: capacity, dir: $author$project$MVC$Types$Forward, flow: flow, point1: t1, point2: t2},
-								removeMaybe(lss));
-						} else {
-							var lss = ls.b;
-							var $temp$ls = lss;
-							ls = $temp$ls;
-							continue removeMaybe;
-						}
-					}
-				}
-			};
-			return removeMaybe(tmp);
-		}(
-			$elm$core$List$concat(
-				A2(
-					$elm$core$List$map,
-					function (_v2) {
-						var k = _v2.a;
-						var v = _v2.b;
-						return A2(
-							$elm$core$List$map,
-							function (_v3) {
-								var o = _v3.a;
-								var _v4 = _v3.b;
-								var capacity = _v4.a;
-								var flow = _v4.b;
-								return _Utils_Tuple3(
-									A2($elm$core$Dict$get, k, verts),
-									A2($elm$core$Dict$get, o, verts),
-									_Utils_Tuple3(capacity, flow, $author$project$MVC$Types$Forward));
-							},
-							v);
-					},
-					A2(
-						$elm$core$List$map,
-						function (_v1) {
-							var k = _v1.a;
-							var v = _v1.b;
-							return _Utils_Tuple2(
-								k,
-								$elm$core$Dict$toList(v));
-						},
-						$elm$core$List$concat(
-							A2($elm$core$List$map, $elm$core$Dict$toList, draft.points))))));
-		return {
-			edges: edges,
-			points: $elm$core$Dict$values(verts)
-		};
-	}
 };
 var $timjs$elm_collage$Collage$Events$on = F3(
 	function (event, decoder, collage) {
@@ -9297,7 +9485,20 @@ var $timjs$elm_collage$Collage$Events$mouseOn = F2(
 var $timjs$elm_collage$Collage$Events$onMouseDown = $timjs$elm_collage$Collage$Events$mouseOn('mousedown');
 var $timjs$elm_collage$Collage$Events$onMouseUp = $timjs$elm_collage$Collage$Events$mouseOn('mouseup');
 var $author$project$Components$GraphConstructor$graph_constructor_view = function (model) {
-	var graph = $author$project$Components$Utils$GraphConstructorHelpers$graphDraftToGraph(model);
+	var graph = function () {
+		var _v2 = model.graphDraft;
+		if (_v2.$ === 'Nothing') {
+			return _Debug_todo(
+				'Components.GraphConstructor',
+				{
+					start: {line: 40, column: 20},
+					end: {line: 40, column: 30}
+				})('Bad input in GraphConstructor');
+		} else {
+			var points = _v2.a.points;
+			return $author$project$MVC$Utils$StateHelpers$graphDraftToGraph(points);
+		}
+	}();
 	var createEdge = function (e) {
 		var parallel_normed = function () {
 			var y = e.point2.y - e.point1.y;
@@ -9361,7 +9562,7 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 									$elm$core$String$fromInt(e.capacity)))))
 					])));
 	};
-	var edges = A2($elm$core$List$map, createEdge, graph.edges);
+	var edgesViz = A2($elm$core$List$map, createEdge, graph.edges);
 	var createCirc = function (p) {
 		return A2(
 			$timjs$elm_collage$Collage$Events$onMouseUp,
@@ -9407,12 +9608,12 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 							$timjs$elm_collage$Collage$uniform($avh4$elm_color$Color$white),
 							$timjs$elm_collage$Collage$circle(25))))));
 	};
-	var points = A2($elm$core$List$map, createCirc, graph.points);
+	var pointsViz = A2($elm$core$List$map, createCirc, graph.points);
 	var foreground = A2(
 		$timjs$elm_collage$Collage$shift,
 		_Utils_Tuple2(-500, -250),
 		$timjs$elm_collage$Collage$group(
-			_Utils_ap(points, edges)));
+			_Utils_ap(pointsViz, edgesViz)));
 	var background = A2(
 		$timjs$elm_collage$Collage$outlined,
 		$timjs$elm_collage$Collage$invisible,
@@ -9431,117 +9632,37 @@ var $author$project$Components$GraphConstructor$graph_constructor_view = functio
 				$rundis$elm_bootstrap$Bootstrap$CDN$stylesheet,
 				$timjs$elm_collage$Collage$Render$svg(scene),
 				A2(
-				$rundis$elm_bootstrap$Bootstrap$Button$button,
+				$rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroup,
+				_List_Nil,
 				_List_fromArray(
 					[
-						$rundis$elm_bootstrap$Bootstrap$Button$primary,
-						$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$ToHome)
-					]),
-				_List_fromArray(
-					[
-						$elm$html$Html$text('Home')
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$GraphConstructorToAlgo)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Compute Max Flow')
+							])),
+						A2(
+						$rundis$elm_bootstrap$Bootstrap$ButtonGroup$button,
+						_List_fromArray(
+							[
+								$rundis$elm_bootstrap$Bootstrap$Button$primary,
+								$rundis$elm_bootstrap$Bootstrap$Button$onClick($author$project$MVC$Types$ToHome)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Home')
+							]))
 					]))
 			]));
 };
 var $author$project$MVC$Types$BuildGraph = {$: 'BuildGraph'};
 var $author$project$MVC$Types$ToExample1 = {$: 'ToExample1'};
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$ButtonItem = function (a) {
-	return {$: 'ButtonItem', a: a};
-};
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$button = F2(
-	function (options, children) {
-		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$ButtonItem(
-			A2($rundis$elm_bootstrap$Bootstrap$Button$button, options, children));
-	});
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$GroupItem = function (a) {
-	return {$: 'GroupItem', a: a};
-};
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$applyModifier = F2(
-	function (modifier, options) {
-		switch (modifier.$) {
-			case 'Size':
-				var size = modifier.a;
-				return _Utils_update(
-					options,
-					{
-						size: $elm$core$Maybe$Just(size)
-					});
-			case 'Vertical':
-				return _Utils_update(
-					options,
-					{vertical: true});
-			default:
-				var attrs_ = modifier.a;
-				return _Utils_update(
-					options,
-					{
-						attributes: _Utils_ap(options.attributes, attrs_)
-					});
-		}
-	});
-var $elm$virtual_dom$VirtualDom$attribute = F2(
-	function (key, value) {
-		return A2(
-			_VirtualDom_attribute,
-			_VirtualDom_noOnOrFormAction(key),
-			_VirtualDom_noJavaScriptOrHtmlUri(value));
-	});
-var $elm$html$Html$Attributes$attribute = $elm$virtual_dom$VirtualDom$attribute;
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$defaultOptions = {attributes: _List_Nil, size: $elm$core$Maybe$Nothing, vertical: false};
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$groupAttributes = F2(
-	function (toggle, modifiers) {
-		var options = A3($elm$core$List$foldl, $rundis$elm_bootstrap$Bootstrap$ButtonGroup$applyModifier, $rundis$elm_bootstrap$Bootstrap$ButtonGroup$defaultOptions, modifiers);
-		return _Utils_ap(
-			_List_fromArray(
-				[
-					A2($elm$html$Html$Attributes$attribute, 'role', 'group'),
-					$elm$html$Html$Attributes$classList(
-					_List_fromArray(
-						[
-							_Utils_Tuple2('btn-group', true),
-							_Utils_Tuple2('btn-group-toggle', toggle),
-							_Utils_Tuple2('btn-group-vertical', options.vertical)
-						])),
-					A2($elm$html$Html$Attributes$attribute, 'data-toggle', 'buttons')
-				]),
-			_Utils_ap(
-				function () {
-					var _v0 = A2($elm$core$Maybe$andThen, $rundis$elm_bootstrap$Bootstrap$General$Internal$screenSizeOption, options.size);
-					if (_v0.$ === 'Just') {
-						var s = _v0.a;
-						return _List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('btn-group-' + s)
-							]);
-					} else {
-						return _List_Nil;
-					}
-				}(),
-				options.attributes));
-	});
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroupItem = F2(
-	function (options, items) {
-		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$GroupItem(
-			A2(
-				$elm$html$Html$div,
-				A2($rundis$elm_bootstrap$Bootstrap$ButtonGroup$groupAttributes, false, options),
-				A2(
-					$elm$core$List$map,
-					function (_v0) {
-						var elem = _v0.a;
-						return elem;
-					},
-					items)));
-	});
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$renderGroup = function (_v0) {
-	var elem = _v0.a;
-	return elem;
-};
-var $rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroup = F2(
-	function (options, items) {
-		return $rundis$elm_bootstrap$Bootstrap$ButtonGroup$renderGroup(
-			A2($rundis$elm_bootstrap$Bootstrap$ButtonGroup$buttonGroupItem, options, items));
-	});
 var $author$project$Components$Home$home_view = function (model) {
 	return A2(
 		$rundis$elm_bootstrap$Bootstrap$Grid$container,

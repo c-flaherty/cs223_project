@@ -2,6 +2,9 @@ module MVC.Types exposing (Flow, Network, Model, Capacity, Point, Dir(..), Edge,
 
 import Dict exposing (Dict)
 
+{-
+This file contains all types used in this project.
+-}
 type alias AdjacencyList = Dict String (Dict String (Capacity, Flow))
 
 type alias Network =

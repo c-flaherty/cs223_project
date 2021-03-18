@@ -1,5 +1,9 @@
 module Components.Algo exposing (..)
 
+{-
+This file corresponds to the algo view.
+-}
+
 ---------------------- Standard Inputs --------------------------
 import Browser
 import Html exposing (Html, text)

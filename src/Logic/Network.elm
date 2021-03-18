@@ -1,5 +1,9 @@
 module Logic.Network exposing(ford_fulkerson_helper)
 
+{-
+This file contains the Network API used to compute max flow.
+-}
+
 import Dict
 import Debug
 import Set exposing (Set)

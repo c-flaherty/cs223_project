@@ -1,5 +1,9 @@
 module Examples.Example1 exposing (..)
 
+{-
+This is an example graph that can be accessed by clicking the "example 1" button on the Home view.
+-}
+
 import Dict
 
 import MVC.Types exposing (..)
