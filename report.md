@@ -1,4 +1,5 @@
 ## Summary
+
 We worked on a project that aimed to visualize the Ford Fulkerson max flow algorithm. In this process, we thought
 deeply about appropriate data structures for graphs and networks, implementing the algorithm itself, and a good UX/UI. In addition to being able to visualize the Ford Fulkerson algorithm, our program includes a graph constructor that can be used to construct a rich set of networks through an intuitive UI. After constructing a graph, a user can run max flow on it as well as download it. As they build a graph, they can at any moment compute max flow on the current state of the graph, and then return to the graph constructor for further iteration. In addition to being able to download graphs, users can also upload graphs previously downloaded into the graph constructor.
 
