@@ -1,6 +1,17 @@
-Colin and I worked on a project that aimed to visualize the Ford Fulkerson max flow algorithm. In the process we thought
+We worked on a project that aimed to visualize the Ford Fulkerson max flow algorithm. In the process we thought
 deeply about appropriate data structures for graphs and networks, implementing the algorithm itself, and about how to
 make the visualization user friendly, instructive, and intuitive. 
 
-For the network we decided on a Dict of Dict's for the adjacency matrix, and a source String and sink String, all packaged within a record. For this we made extensive use of the Dict library in Elm.
+In order to represent a network, we use several representations. The first represesentation is an adjacency list packed in a record with some metadata, represented as a dictionary of dictionaries using the Dict library. The second representation is a list of vertices and list of edges containing coordinates. The final representation is the same as the first representation except it separates vertices at the top level (the outer Dict) by column with a List. This helps with ensuring operations on the graph constructor page work as expected.
+
+For the visualization, we employ a topological sort with Kahn's algorithm on each column of vertices to ensure there are minimal crossed edges in the graph visualization.
+
+In the graph constructor, there are 4 operations: 
+1) Clicking on edge will add another vertex along that edge.
+2) Holding shift and clicking on an edge will increment the capacity along that edge in the direction of the arrow by 1.
+3) Dragging from vertex A to vertex B will move vertex A into the column of vertex B.
+4) Holding shift and dragging from vertex A to vertex B will add an edge from vertex A to vertex B, provided theses vertices are at most one column apart.
+
+With these four operations, you can create a lot of different kinds of flow networks.
+
 
