@@ -13,7 +13,7 @@ In order to represent a network, we use several representations. The first repre
 
 ## Ford Fulkerson Algorithm
 
-For more information, please see `src/Logic/Network.elm`.
+We implement the standard Ford Fulkerson algorithm with depth first search, except in a functional method. `ford_fulkerson_helper` runs one round of Ford Fulkerson. It finds an augmenting path in the residual network using `augmenting`, which uses `dfs`, and then pushes flow along this augmenting path. If there is not augmenting path, the input network is simply returned. For more information, please see `src/Logic/Network.elm`.
 
 ## Visualization and Graph Constructor 
 

@@ -42,12 +42,8 @@ addEdgeToNetwork u v c network =
     {
       source = network.source,
       sink = network.sink,
-      adj = {-Debug.log "addEdgeToNetwork"-} network.adj |> Dict.insert u new_u_adj |> Dict.insert v new_v_adj
-      --(Dict.insert v new_v_adj (Dict.insert u new_u_adj network.adj))
+      adj = network.adj |> Dict.insert u new_u_adj |> Dict.insert v new_v_adj
     }
-
-deleteEdge =
-  Debug.todo "deleteEdge"
 
 getFlow : Network -> String -> String -> Flow
 getFlow network u v =
@@ -112,19 +108,10 @@ calcFlow network =
     foo acc nbrs =
       case nbrs of
         nbr :: nbrs_rest ->
-          {-
-          let
-            nbr = nbr_dict 
-              |> Dict.keys
-              |> List.head
-              |> Maybe.withDefault "DEFAULT"
-          in
-          -}
           foo (acc + (getFlow network network.source nbr)) nbrs_rest
         [] ->
           acc
   in
-    --foo 0 (Dict.get network.source network.adj |> Maybe.withDefault Dict.empty |> Dict.toList) 
     foo 0 (getNeighbors network network.source)
 ----------------------------------------------------------------------------------------------------------------
 
@@ -133,16 +120,13 @@ constructPath network path =
 -- Construct a List of {u, v, c, f} from a List of vertices
   let 
     foo p =
-      {-let
-        _ = Debug.log "path" p
-      in-}
         case p of
           n1 :: n2 :: rest ->
             (n1, n2) :: (foo (n2::rest))
           _ ->
             []
   in
-    {-Debug.log "constructPath : "-} (List.map (\(n1, n2) -> {u=n1, v=n2, c=getCapacity network n1 n2, f=getFlow network n1 n2}) (foo path))
+    (List.map (\(n1, n2) -> {u=n1, v=n2, c=getCapacity network n1 n2, f=getFlow network n1 n2}) (foo path))
 
 iterateNbrs : Network -> Set String -> List String -> (Set String, Maybe (List String))
 iterateNbrs resnet visited nbrs =
@@ -152,16 +136,12 @@ iterateNbrs resnet visited nbrs =
     next::nbrs_rest ->
       case dfsHelper resnet next resnet.sink visited of
         (new_visited, Just path) ->
-          (new_visited, Just ({-next::-}path))
+          (new_visited, Just (path))
         (new_visited, Nothing) ->
           iterateNbrs resnet visited nbrs_rest
 
 dfsHelper : Network -> String -> String -> Set String -> (Set String, Maybe (List String))
 dfsHelper resnet cur sink visited =
-  {-let
-    _ = Debug.log "visited" visited
-    _ = Debug.log "cur" cur
-  in-}
   if cur == sink then
     (Set.insert cur visited, Just [cur])
   else if String.isEmpty cur then
@@ -178,7 +158,7 @@ dfsHelper resnet cur sink visited =
       notVisited v =
         not (Set.member v cur_visited)
 
-      cur_nbrs = {-Debug.log "cur_nbrs"-} (getNeighbors resnet cur 
+      cur_nbrs = (getNeighbors resnet cur 
         |> List.filter capIsPositive 
         |> List.filter notVisited)
     in
@@ -242,6 +222,5 @@ ford_fulkerson_helper network resnet =
             (aug_network, aug_resnet) = pushFlow network resnet aug_path aug_flow
           in
             {network=aug_network, resnet=aug_resnet, aug_path= Just aug_path, flow=calcFlow aug_network}
-            --ford_fulkerson_helper aug_network aug_resnet
       Nothing ->
         {network=network, resnet=resnet, aug_path=Nothing, flow=calcFlow network}
